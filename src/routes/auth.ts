@@ -89,7 +89,7 @@ router.post(
     let user: Pick<User, "id">;
 
     if (isAnonymous) {
-      // Upgrading anonymous user to permanent user
+      console.log("Upgrading anonymous user to permanent user");
       user = await prisma.user.update({
         where: {
           id: req.auth?.uid,

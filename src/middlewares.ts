@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { ErrorWithStatus } from "./utils/errors";
+import type { ErrorWithStatus } from "./utils/errors";
 
 export const handleUnauthorizedError = (
   err: Error,
@@ -7,6 +7,7 @@ export const handleUnauthorizedError = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(err);
   if (err.name === "UnauthorizedError") {
     return res.status(403).json({
       message: "Unauthorized",
@@ -22,8 +23,9 @@ export const handleErrorWithStatus = (
   res: Response,
   next: NextFunction
 ) => {
-  if (err instanceof ErrorWithStatus) {
-    return res.status(err.status).json({
+  console.log(err);
+  if (err.name === "ErrorWithStatus") {
+    return res.status((err as ErrorWithStatus).status).json({
       message: err.message,
     });
   } else {
