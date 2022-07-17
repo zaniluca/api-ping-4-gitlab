@@ -1,5 +1,5 @@
 import express from "express";
-import dotenv from "dotenv";
+import "dotenv/config";
 import user from "./routes/user";
 import notification from "./routes/notification";
 import auth from "./routes/auth";
@@ -8,8 +8,6 @@ import { handleErrorWithStatus, handleUnauthorizedError } from "./middlewares";
 import { expressjwt } from "express-jwt";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT ?? 8080;
