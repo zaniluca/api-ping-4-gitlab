@@ -1,12 +1,11 @@
 import { Router, Request } from "express";
 import type { Headers, PipelineStatus, WebhookPayload } from "../utils/types";
 import hash from "object-hash";
-import { prisma } from "../../prisma/client";
+import prisma from "../../prisma/client";
 import type { Notification, User } from "@prisma/client";
 import multer from "multer";
 import { Expo, ExpoPushMessage } from "expo-server-sdk";
 import { parseHeaders } from "../utils/common";
-import { UnauthorizedError } from "express-jwt";
 import { ErrorWithStatus } from "../utils/errors";
 
 const router = Router();
@@ -133,7 +132,6 @@ router.post("/webhook", multer().none(), async (req: Request, res) => {
         ...data,
         headers,
         text,
-        rawHeaders,
         contentHash,
         userId: user.id,
       },

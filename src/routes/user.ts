@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { prisma } from "../../prisma/client";
 import bcrypt from "bcrypt";
 import type { User } from "@prisma/client";
 import type { Request as ExpressJwtRequest } from "express-jwt";
 import { USER_PUBLIC_FIELDS } from "../utils/constants";
 import type { AuthRequestWithPayload } from "../utils/types";
+import prisma from "../../prisma/client";
 
 const router = Router();
 

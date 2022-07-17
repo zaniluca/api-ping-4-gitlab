@@ -30,8 +30,12 @@ app.use("/", webhook);
 app.use(handleUnauthorizedError);
 app.use(handleErrorWithStatus);
 
-app.get("/health", (_req, res) => res.sendStatus(200).end());
+app.get("/health", (_req, res) => res.sendStatus(200));
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+  });
+}
+
+export default app;

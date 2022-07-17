@@ -1,5 +1,5 @@
 import { Router, Request } from "express";
-import { prisma } from "../../prisma/client";
+import prisma from "../../prisma/client";
 import bcrypt from "bcrypt";
 import type {
   AuthRequestWithPayload,
