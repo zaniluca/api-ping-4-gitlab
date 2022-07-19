@@ -94,15 +94,6 @@ router.post("/webhook", multer().none(), async (req: Request, res) => {
 
   const { to, subject, text: rawText, html, headers: rawHeaders } = body!;
 
-  const data = {
-    subject,
-    rawText,
-    html,
-  };
-
-  const hookId = to.split("@")[0];
-  const contentHash = hash(data);
-
   // Parsing headers string into object
   const headers = parseHeaders(rawHeaders);
   console.log("Parsed Headers: ", headers);
@@ -111,6 +102,15 @@ router.post("/webhook", multer().none(), async (req: Request, res) => {
   // But also keeping original
   const text = sanitizeText(rawText);
   console.log("Sanitized text: ", text);
+
+  const hashPayload = {
+    subject,
+    text,
+    html,
+  };
+
+  const hookId = to.split("@")[0];
+  const contentHash = hash(hashPayload);
 
   let user: User;
   try {
@@ -129,9 +129,10 @@ router.post("/webhook", multer().none(), async (req: Request, res) => {
   try {
     notification = await prisma.notification.create({
       data: {
-        ...data,
-        headers,
+        subject,
         text,
+        html,
+        headers,
         contentHash,
         userId: user.id,
       },
