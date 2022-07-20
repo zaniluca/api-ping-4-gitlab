@@ -7,10 +7,11 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --no-notify --respawn src/index.ts",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && next build",
     "start": "node dist/src/index.js",
     "test": "jest -i",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",
