@@ -11,6 +11,7 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/pnpm-install
+        node-version: 16.15.1
 
       - name: Build
         run: pnpm build
