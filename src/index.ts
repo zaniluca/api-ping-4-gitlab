@@ -4,7 +4,7 @@ import user from "./routes/user";
 import notification from "./routes/notification";
 import auth from "./routes/auth";
 import webhook from "./routes/webhook";
-import { handleErrorWithStatus, handleUnauthorizedError } from "./middlewares";
+import { handleError, logError } from "./middlewares";
 import { expressjwt } from "express-jwt";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
@@ -40,13 +40,12 @@ app.use("/user", user);
 app.use("/notification", notification);
 app.use("/", auth);
 app.use("/", webhook);
+app.get("/health", (_req, res) => res.send("OK"));
 
 // Error handling
 app.use(Sentry.Handlers.errorHandler());
-app.use(handleUnauthorizedError);
-app.use(handleErrorWithStatus);
-
-app.get("/health", (_req, res) => res.sendStatus(200).end());
+app.use(logError);
+app.use(handleError);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
