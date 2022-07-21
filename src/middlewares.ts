@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import morgan from "morgan";
 import type { ErrorWithStatus } from "./utils/errors";
 
 export const handleError = (
@@ -31,3 +32,7 @@ export const logError = (
   console.error(err);
   next(err);
 };
+
+export const requestLogger = morgan(
+  process.env.NODE_ENV === "production" ? "short" : "dev"
+);

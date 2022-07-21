@@ -4,13 +4,14 @@ import user from "./routes/user";
 import notification from "./routes/notification";
 import auth from "./routes/auth";
 import webhook from "./routes/webhook";
-import { handleError, logError } from "./middlewares";
+import { handleError, logError, requestLogger } from "./middlewares";
 import { expressjwt } from "express-jwt";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
 
 // Middlewares
+app.use(requestLogger);
 app.use(express.json());
 app.use(
   "/user",
