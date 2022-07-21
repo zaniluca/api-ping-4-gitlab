@@ -20,6 +20,7 @@ router.get("/", async (req: ExpressJwtRequest, res) => {
 });
 
 router.put("/", async (req: AuthRequestWithPayload<User>, res) => {
+  //TODO: validate input
   const { password, email, hookId } = req.body;
 
   const user = await prisma.user.update({

@@ -5,7 +5,7 @@ import app from "..";
 import type { User } from "@prisma/client";
 import { getAccessToken, getRefreshToken } from "../utils/common";
 
-jest.setTimeout(30000);
+jest.setTimeout(10000);
 
 const MOCK_USER: User = {
   id: "1",
