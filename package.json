@@ -10,6 +10,7 @@
     "build": "prisma generate && tsc",
     "start": "node dist/src/index.js",
     "test": "jest -i",
+    "test:watch": "jest -i --watch",
     "prepare": "husky install",
     "postinstall": "prisma generate"
   },
