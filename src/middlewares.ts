@@ -29,7 +29,9 @@ export const logError = (
   _res: Response,
   next: NextFunction
 ) => {
-  console.error(err);
+  if (process.env.NODE_ENV !== "test") {
+    console.error(`${err.name}: ${err.message}`);
+  }
   next(err);
 };
 
