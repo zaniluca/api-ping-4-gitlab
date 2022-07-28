@@ -36,5 +36,6 @@ export const logError = (
 };
 
 export const requestLogger = morgan(
-  process.env.NODE_ENV === "production" ? "short" : "dev"
+  process.env.NODE_ENV === "production" ? "short" : "dev",
+  { skip: () => process.env.NODE_ENV === "test" }
 );
