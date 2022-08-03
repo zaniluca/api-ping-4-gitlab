@@ -15,6 +15,7 @@ const MOCK_USER: User = {
   hookId: "test",
   lastLogin: new Date(Date.now() - 1000),
   onboardingCompleted: false,
+  mutedUntil: null,
 };
 
 const INVALID_REFRESH_TOKEN =
@@ -251,6 +252,7 @@ describe("POST /refresh", () => {
       .expect((res) => {
         expect(res.status).toBe(200);
         expect(res.body.accessToken).toBeDefined();
+        expect(res.body.refreshToken).toBeDefined();
       });
   });
 });
