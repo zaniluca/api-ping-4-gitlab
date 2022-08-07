@@ -74,6 +74,7 @@ router.post(
       }
     }
 
+    // TODO: remove hookId from the payload
     const { password, email, hookId } = req.body as SignupPayload & {
       hookId?: string;
     };
@@ -111,6 +112,7 @@ router.post(
         data: {
           email,
           password: bcrypt.hashSync(password, 10),
+          // TODO: remove hookId
           hookId: hookId ?? generateUniqueHook(),
         },
         select: {
