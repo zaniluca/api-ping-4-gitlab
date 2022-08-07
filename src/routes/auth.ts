@@ -74,7 +74,9 @@ router.post(
       }
     }
 
-    const { password, email } = req.body as SignupPayload;
+    const { password, email, hookId } = req.body as SignupPayload & {
+      hookId?: string;
+    };
     const isAnonymous = !!req.auth?.uid;
 
     const alreadyExists = await prisma.user.count({
@@ -109,7 +111,7 @@ router.post(
         data: {
           email,
           password: bcrypt.hashSync(password, 10),
-          hookId: generateUniqueHook(),
+          hookId: hookId ?? generateUniqueHook(),
         },
         select: {
           id: true,
