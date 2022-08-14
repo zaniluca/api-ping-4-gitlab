@@ -12,22 +12,25 @@ import {
   updateLastLogin,
 } from "../utils/common";
 import type { User } from "@prisma/client";
-import { RefreshBodySchema, SignupBodySchema } from "../utils/validation";
+import {
+  LoginBodySchema,
+  RefreshBodySchema,
+  SignupBodySchema,
+} from "../utils/validation";
 import { BadRequestError, CredentialsError } from "../utils/errors";
 import { expressjwt } from "express-jwt";
 import type yup from "yup";
 import generateUniqueHook from "../utils/hook-generator";
 import { validate } from "../middlewares";
+import type { InferType } from "yup";
 
 const router = Router();
 
-type LoginPayload = {
-  email: string;
-  password: string;
-};
+type LoginPayload = InferType<typeof LoginBodySchema>;
 
 router.post(
   "/login",
+  validate({ bodySchema: LoginBodySchema }),
   async (req: RequestWithPayload<LoginPayload>, res, next) => {
     const { email, password } = req.body;
 
@@ -54,7 +57,7 @@ router.post(
   }
 );
 
-type SignupPayload = yup.InferType<typeof SignupBodySchema>;
+type SignupPayload = InferType<typeof SignupBodySchema>;
 
 router.post(
   "/signup",
@@ -65,7 +68,7 @@ router.post(
   }),
   validate({ bodySchema: SignupBodySchema }),
   async (req: AuthRequestWithPayload<SignupPayload>, res, next) => {
-    const { password, email } = req.body as SignupPayload;
+    const { password, email } = req.body;
     const isAnonymous = !!req.auth?.uid;
 
     const alreadyExists = await prisma.user.count({
@@ -131,13 +134,13 @@ router.post("/anonymous", async (_req: Request, res) => {
   });
 });
 
-type RefreshPayload = yup.InferType<typeof RefreshBodySchema>;
+type RefreshPayload = InferType<typeof RefreshBodySchema>;
 
 router.post(
   "/refresh",
   validate({ bodySchema: RefreshBodySchema }),
-  async (req: RequestWithPayload<RefreshPayload>, res, next) => {
-    const { refreshToken } = req.body as RefreshPayload;
+  async (req: RequestWithPayload<RefreshPayload>, res) => {
+    const { refreshToken } = req.body;
 
     const uid = getUidFromToken(refreshToken);
 
