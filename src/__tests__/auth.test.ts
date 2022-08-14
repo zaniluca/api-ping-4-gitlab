@@ -217,8 +217,7 @@ describe("POST /refresh", () => {
       })
       .expect("Content-Type", /json/)
       .expect((res) => {
-        expect(res.status).toBe(403);
-        expect(res.body.message).toBe("Unauthorized");
+        expect(res.status).toBe(400);
       });
   });
   it("Fails if refresh token signature is invalid", async () => {
@@ -229,8 +228,7 @@ describe("POST /refresh", () => {
       })
       .expect("Content-Type", /json/)
       .expect((res) => {
-        expect(res.status).toBe(403);
-        expect(res.body.message).toBe("Unauthorized");
+        expect(res.status).toBe(400);
       });
   });
   it("Updates last login date", async () => {
