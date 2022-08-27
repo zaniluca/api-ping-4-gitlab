@@ -17,9 +17,12 @@ import {
   RefreshBodySchema,
   SignupBodySchema,
 } from "../utils/validation";
-import { BadRequestError, CredentialsError } from "../utils/errors";
+import {
+  BadRequestError,
+  CredentialsError,
+  ErrorWithStatus,
+} from "../utils/errors";
 import { expressjwt } from "express-jwt";
-import type yup from "yup";
 import generateUniqueHook from "../utils/hook-generator";
 import { validate } from "../middlewares";
 import type { InferType } from "yup";
@@ -78,8 +81,7 @@ router.post(
     });
 
     if (alreadyExists) {
-      // TODO: REMOVE AND TURN to 409 error
-      return res.sendStatus(200);
+      return next(new ErrorWithStatus(409, "User already exists"));
     }
 
     let user: Pick<User, "id">;
@@ -112,7 +114,8 @@ router.post(
       });
     }
 
-    return res.status(201).json({
+    // If the user is anonymous we don't create a new resource so the status should not be 201
+    return res.status(isAnonymous ? 200 : 201).json({
       accessToken: getAccessToken(user.id),
       refreshToken: getRefreshToken(user.id),
     });
