@@ -68,12 +68,7 @@ router.post(
   }),
   validate({ bodySchema: SignupBodySchema }),
   async (req: AuthRequestWithPayload<SignupPayload>, res, next) => {
-    // TODO: remove hookId and onboardingCompleted from the payload
-    const { password, email, hookId, onboardingCompleted } =
-      req.body as SignupPayload & {
-        hookId?: string;
-        onboardingCompleted?: boolean;
-      };
+    const { password, email } = req.body;
     const isAnonymous = !!req.auth?.uid;
 
     const alreadyExists = await prisma.user.count({
@@ -109,9 +104,7 @@ router.post(
         data: {
           email,
           password: bcrypt.hashSync(password, 10),
-          // TODO: remove hookId and onboardingCompleted,
-          hookId: hookId ?? generateUniqueHook(),
-          onboardingCompleted: onboardingCompleted ?? false,
+          hookId: generateUniqueHook(),
         },
         select: {
           id: true,
