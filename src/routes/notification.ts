@@ -31,6 +31,9 @@ router.get("/list", async (req: ExpressJwtRequest, res) => {
     ...paginationParams,
   });
 
+  const totalCount = await prisma.notification.count();
+  res.setHeader("X-Total-Count", totalCount);
+
   return res.json(notifications);
 });
 
