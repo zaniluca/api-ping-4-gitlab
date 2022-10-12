@@ -8,19 +8,42 @@ generator client {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  email               String?        @unique
-  hookId              String?        @unique @map("hook_id")
+  id                  String    @id @default(cuid())
+  email               String?   @unique
+  hookId              String?   @unique @map("hook_id")
   password            String?
-  expoPushTokens      String[]       @map("expo_push_tokens")
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
-  lastLogin           DateTime       @default(now()) @map("last_login")
-  onboardingCompleted Boolean        @default(false) @map("onboarding_completed")
-  mutedUntil          DateTime?      @map("muted_until")
-  notifications       Notification[]
+  expoPushTokens      String[]  @map("expo_push_tokens")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  lastLogin           DateTime  @default(now()) @map("last_login")
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  mutedUntil          DateTime? @map("muted_until")
+
+  accounts      Account[]
+  notifications Notification[]
 
   @@map("users")
+}
+
+enum Provider {
+  GITLAB
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  provider          Provider
+  providerAccountId String   @map("provider_account_id")
+  refreshToken      String   @map("refresh_token") @db.Text
+  accessToken       String   @map("access_token") @db.Text
+  expiresAt         Int      @map("expires_at")
+  tokenType         String   @default("Bearer") @map("token_type")
+  scope             String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Notification {
