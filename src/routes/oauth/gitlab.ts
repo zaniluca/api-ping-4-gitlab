@@ -115,3 +115,5 @@ router.get("/callback", async (req, res) => {
     `http://localhost:3000?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: redirect to deep link of app
   );
 });
+
+export default router;
