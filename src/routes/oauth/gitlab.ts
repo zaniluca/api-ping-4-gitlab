@@ -25,9 +25,9 @@ router.get("/authorize", async (_req, res) => {
     "https://gitlab.com/oauth/authorize?" +
       new URLSearchParams({
         client_id: process.env.GITLAB_APP_ID!,
-        redirect_uri: "http://localhost:3000/api/gitlab/callback",
+        redirect_uri: "http://localhost:8080/oauth/gitlab/callback",
         response_type: "code",
-        scope: "api",
+        scope: "read_user",
       })
   );
 });
@@ -44,7 +44,7 @@ router.get("/callback", async (req, res) => {
         client_secret: process.env.GITLAB_APP_SECRET!,
         grant_type: "authorization_code",
         code,
-        redirect_uri: "http://localhost:3000/api/gitlab/callback", // TODO: switch link based on environment
+        redirect_uri: "http://localhost:8080/oauth/gitlab/callback", // TODO: switch link based on environment
       },
     }
   );
@@ -71,7 +71,7 @@ router.get("/callback", async (req, res) => {
     const refreshToken = getRefreshToken(userAccount.userId);
 
     return res.redirect(
-      `http://localhost:3000?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: redirect to deep link of app
+      `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
     );
   }
 
@@ -112,7 +112,7 @@ router.get("/callback", async (req, res) => {
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(
-    `http://localhost:3000?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: redirect to deep link of app
+    `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
   );
 });
 
