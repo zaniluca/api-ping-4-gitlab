@@ -58,17 +58,16 @@ router.get("/callback", async (req, res) => {
     }
   );
 
-  const userAccount = await prisma.account.findFirst({
+  const alreadyExistingUser = await prisma.user.findUnique({
     where: {
-      providerAccountId: profile.id.toString(),
-      provider: "GITLAB",
+      gitlabId: profile.id,
     },
   });
 
   // Login
-  if (userAccount) {
-    const accessToken = getAccessToken(userAccount.userId);
-    const refreshToken = getRefreshToken(userAccount.userId);
+  if (alreadyExistingUser) {
+    const accessToken = getAccessToken(alreadyExistingUser.id);
+    const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
       `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
@@ -93,18 +92,12 @@ router.get("/callback", async (req, res) => {
     });
   }
 
-  await prisma.account.create({
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
     data: {
-      provider: "GITLAB",
-      providerAccountId: profile.id.toString(),
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      tokenType: tokens.token_type,
-      userId: user.id,
-      expiresAt: new Date(
-        tokens.created_at + tokens.expires_in * 1000
-      ).valueOf(),
-      scope: tokens.scope,
+      gitlabId: profile.id,
     },
   });
 

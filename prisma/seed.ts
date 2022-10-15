@@ -77,7 +77,6 @@ const NOTIFICATIONS = [ISSUE_1];
 
 const load = async () => {
   try {
-    await prisma.account.deleteMany();
     await prisma.user.deleteMany();
     await prisma.notification.deleteMany();
 
