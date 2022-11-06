@@ -18,6 +18,7 @@ type GitLabTokenResponse = {
 
 type GitlabUserResponse = {
   id: number;
+  email: string;
 };
 
 router.get("/authorize", async (_req, res) => {
@@ -25,7 +26,7 @@ router.get("/authorize", async (_req, res) => {
     "https://gitlab.com/oauth/authorize?" +
       new URLSearchParams({
         client_id: process.env.GITLAB_APP_ID!,
-        redirect_uri: "http://localhost:8080/oauth/gitlab/callback",
+        redirect_uri: "http://localhost:8080/oauth/gitlab/callback", // TODO: switch link based on environment
         response_type: "code",
         scope: "read_user",
       })
@@ -70,7 +71,7 @@ router.get("/callback", async (req, res) => {
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
-      `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
+      `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: switch link based on environment
     );
   }
 
@@ -98,6 +99,7 @@ router.get("/callback", async (req, res) => {
     },
     data: {
       gitlabId: profile.id,
+      email: profile.email,
     },
   });
 
@@ -105,7 +107,7 @@ router.get("/callback", async (req, res) => {
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(
-    `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
+    `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: switch link based on environment
   );
 });
 
