@@ -7,6 +7,11 @@ import generateUniqueHook from "../../utils/hook-generator";
 
 const router = Router();
 
+const APP_REDIRECT_SCHEME =
+  process.env.NODE_ENV === "production"
+    ? "ping4gitlab://"
+    : "exp://localhost:19000/--";
+
 type GitLabTokenResponse = {
   access_token: string;
   token_type: string;
@@ -21,12 +26,12 @@ type GitlabUserResponse = {
   email: string;
 };
 
-router.get("/authorize", async (_req, res) => {
+router.get("/authorize", async (req, res) => {
   return res.redirect(
     "https://gitlab.com/oauth/authorize?" +
       new URLSearchParams({
         client_id: process.env.GITLAB_APP_ID!,
-        redirect_uri: "http://localhost:8080/oauth/gitlab/callback", // TODO: switch link based on environment
+        redirect_uri: `${req.protocol}://${req.headers.host}/oauth/gitlab/callback`,
         response_type: "code",
         scope: "read_user",
       })
@@ -45,7 +50,7 @@ router.get("/callback", async (req, res) => {
         client_secret: process.env.GITLAB_APP_SECRET!,
         grant_type: "authorization_code",
         code,
-        redirect_uri: "http://localhost:8080/oauth/gitlab/callback", // TODO: switch link based on environment
+        redirect_uri: `${req.protocol}://${req.headers.host}/oauth/gitlab/callback`,
       },
     }
   );
@@ -71,7 +76,7 @@ router.get("/callback", async (req, res) => {
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
-      `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: switch link based on environment
+      `${APP_REDIRECT_SCHEME}/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
     );
   }
 
@@ -107,7 +112,7 @@ router.get("/callback", async (req, res) => {
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(
-    `exp://localhost:19000/--/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}` // TODO: switch link based on environment
+    `${APP_REDIRECT_SCHEME}/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
   );
 });
 
