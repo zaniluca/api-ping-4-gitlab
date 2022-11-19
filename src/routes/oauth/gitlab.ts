@@ -1,6 +1,6 @@
-import type { User } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import axios from "axios";
-import { Router } from "express";
+import { Response, Router } from "express";
 import prisma from "../../../prisma/client";
 import { getAccessToken, getRefreshToken } from "../../utils/common";
 import generateUniqueHook from "../../utils/hook-generator";
@@ -26,6 +26,11 @@ type GitlabUserResponse = {
   email: string;
 };
 
+const redirectWithError = (res: Response, error: string) =>
+  res.redirect(
+    `${APP_REDIRECT_SCHEME}/gitlab/login?error=${encodeURIComponent(error)}`
+  );
+
 router.get("/authorize", async (req, res) => {
   return res.redirect(
     "https://gitlab.com/oauth/authorize?" +
@@ -34,6 +39,7 @@ router.get("/authorize", async (req, res) => {
         redirect_uri: `${req.protocol}://${req.headers.host}/oauth/gitlab/callback`,
         response_type: "code",
         scope: "read_user",
+        state: req.query.state as string,
       })
   );
 });
@@ -82,31 +88,53 @@ router.get("/callback", async (req, res) => {
 
   // Signup
   let user: User;
-  if (state) {
-    // The user is connecting the account along with the email password account
-    user = await prisma.user.findUniqueOrThrow({
-      where: {
-        id: state as string,
-      },
-    });
-  } else {
-    // New user
-    user = await prisma.user.create({
-      data: {
-        hookId: generateUniqueHook(),
-      },
-    });
-  }
+  try {
+    if (state) {
+      // The user is connecting the account along with the email password account
+      try {
+        user = await prisma.user.findUniqueOrThrow({
+          where: {
+            id: state as string,
+          },
+        });
+      } catch {
+        return redirectWithError(
+          res,
+          "The user with the given id does not exist"
+        );
+      }
 
-  await prisma.user.update({
-    where: {
-      id: user.id,
-    },
-    data: {
-      gitlabId: profile.id,
-      email: profile.email,
-    },
-  });
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          gitlabId: profile.id,
+          // If the user didn't have an email password account, we set the email based on the gitlab account
+          ...(!user.email && { email: profile.email }),
+        },
+      });
+    } else {
+      // New user
+      user = await prisma.user.create({
+        data: {
+          hookId: generateUniqueHook(),
+          gitlabId: profile.id,
+          email: profile.email,
+        },
+      });
+    }
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2002") {
+        return redirectWithError(
+          res,
+          "An account with this email already exists"
+        );
+      }
+    }
+    throw e;
+  }
 
   const accessToken = getAccessToken(user.id);
   const refreshToken = getRefreshToken(user.id);
