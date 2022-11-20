@@ -4,6 +4,7 @@ import { Response, Router } from "express";
 import prisma from "../../../prisma/client";
 import { getAccessToken, getRefreshToken } from "../../utils/common";
 import generateUniqueHook from "../../utils/hook-generator";
+import * as Sentry from "@sentry/node";
 
 const router = Router();
 
@@ -47,28 +48,36 @@ router.get("/authorize", async (req, res) => {
 router.get("/callback", async (req, res) => {
   const { code, state } = req.query;
 
-  const { data: tokens } = await axios.post<GitLabTokenResponse>(
-    "https://gitlab.com/oauth/token",
-    null,
-    {
-      params: {
-        client_id: process.env.GITLAB_APP_ID!,
-        client_secret: process.env.GITLAB_APP_SECRET!,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: `${req.protocol}://${req.headers.host}/oauth/gitlab/callback`,
-      },
-    }
-  );
+  let profile: GitlabUserResponse;
+  try {
+    const { data: tokens } = await axios.post<GitLabTokenResponse>(
+      "https://gitlab.com/oauth/token",
+      null,
+      {
+        params: {
+          client_id: process.env.GITLAB_APP_ID!,
+          client_secret: process.env.GITLAB_APP_SECRET!,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: `${req.protocol}://${req.headers.host}/oauth/gitlab/callback`,
+        },
+      }
+    );
 
-  const { data: profile } = await axios.get<GitlabUserResponse>(
-    "https://gitlab.com/api/v4/user",
-    {
-      headers: {
-        Authorization: `Bearer ${tokens.access_token}`,
-      },
-    }
-  );
+    const { data } = await axios.get<GitlabUserResponse>(
+      "https://gitlab.com/api/v4/user",
+      {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+        },
+      }
+    );
+
+    profile = data;
+  } catch (error) {
+    Sentry.captureException(error);
+    return redirectWithError(res, "Couldn't authenticate with GitLab");
+  }
 
   const alreadyExistingUser = await prisma.user.findUnique({
     where: {
