@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import user from "./routes/user";
 import notification from "./routes/notification";
+import oauth from "./routes/oauth";
 import auth from "./routes/auth";
 import webhook from "./routes/webhook";
 import { handleError, logError, requestLogger } from "./middlewares";
@@ -11,6 +12,8 @@ import * as Tracing from "@sentry/tracing";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
+
+app.enable("trust proxy");
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -47,6 +50,7 @@ app.use(
 
 // Routes
 app.use("/user", user);
+app.use("/oauth", oauth);
 app.use("/notification", notification);
 app.use("/", auth);
 app.use("/", webhook);
