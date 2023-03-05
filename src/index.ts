@@ -9,6 +9,9 @@ import { handleError, logError, requestLogger } from "./middlewares";
 import { expressjwt } from "express-jwt";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
+import "@sentry/tracing"; // NOTE: @sentry/tracing needs to be imported before @sentry/profiling-node
+import * as Profiling from "@sentry/profiling-node";
+import prisma from "../prisma/client";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
@@ -21,17 +24,22 @@ Sentry.init({
   enabled: process.env.NODE_ENV === "production",
   integrations: [
     new Sentry.Integrations.Http({ tracing: true }),
+    new Tracing.Integrations.Prisma({ client: prisma }),
     new Tracing.Integrations.Express({
       app,
     }),
+    new Profiling.ProfilingIntegration(),
   ],
-  tracesSampleRate: 0.11,
+  // TODO: lower it once test are completed
+  tracesSampleRate: 1,
+  profilesSampleRate: 1,
 });
 
 // Middlewares
-app.use(requestLogger);
+// The request handler must be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
+app.use(requestLogger);
 app.use(express.json());
 app.use(
   "/user",
