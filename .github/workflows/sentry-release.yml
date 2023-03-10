@@ -1,22 +1,17 @@
-name: Build and Test
+name: Sentry Release
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+  push:
+    branches:
+      - master
+      - production
     paths:
       - "**.ts"
       - "**.js"
-      - "**.json"
-      - "**.lock"
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
     env:
       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
@@ -33,5 +28,13 @@ jobs:
       - name: Build
         run: pnpm tsc
 
-      - name: Test
-        run: pnpm test
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        with:
+          environment: ${{ github.ref_name == 'master' && 'staging' || 'production' }}
+          sourcemaps: "./dist"
+          ignore_empty: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
