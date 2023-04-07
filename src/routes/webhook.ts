@@ -13,9 +13,9 @@ const router = Router();
 // optionally providing an access token if you have enabled push security
 const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
 
-const removeFooterFromHtml = (html: string) => {
+const removeFooterFromHtml = (html?: string) => {
   const FOOTER_REGEX = /<div\b[^>]*class="footer"[^>]*>([\s\S]*?)<\/div>/;
-  return html.replace(FOOTER_REGEX, "");
+  return html?.replace(FOOTER_REGEX, "") ?? "<p>No Content</p>"; // TODO: Remove this and make db field nullable
 };
 
 const isValidToken = (t: string) => {
@@ -58,11 +58,11 @@ const composeNotificationContent = (n: NotificationWithHeaders) => {
   };
 };
 
-const sanitizeText = (text: string) => {
+const sanitizeText = (text?: string) => {
   // Removing "Reply to this email..."
   //https://stackoverflow.com/a/56391193/12661017
   // return text.trimStart().replace(/-- .*/g, "$'");
-  return text.trimStart().split("--")[0];
+  return text?.trimStart()?.split("--")?.[0] ?? "No Text"; // TODO: Remove this and make db field nullable
 };
 
 const sanitizeSubject = (subject: string) => {
@@ -150,7 +150,11 @@ router.post("/webhook", multer().none(), async (req, res, next) => {
     return;
   }
 
-  const notificationsCount = await prisma.notification.count();
+  const notificationsCount = await prisma.notification.count({
+    where: {
+      userId: user.id,
+    },
+  });
 
   if (!user.onboardingCompleted && !!notificationsCount) {
     console.log("First notification recived, Onboarding completed");
