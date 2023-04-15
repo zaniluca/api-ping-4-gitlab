@@ -95,7 +95,7 @@ router.get("/callback", async (req, res) => {
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
-      `${APP_REDIRECT_SCHEME}/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
+      `${APP_REDIRECT_SCHEME}/login/gitlab?accessToken=${accessToken}&refreshToken=${refreshToken}`
     );
   }
 
@@ -153,7 +153,7 @@ router.get("/callback", async (req, res) => {
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(
-    `${APP_REDIRECT_SCHEME}/gitlab/login?accessToken=${accessToken}&refreshToken=${refreshToken}`
+    `${APP_REDIRECT_SCHEME}/login/gitlab?accessToken=${accessToken}&refreshToken=${refreshToken}`
   );
 });
 
