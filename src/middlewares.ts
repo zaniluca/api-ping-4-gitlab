@@ -30,9 +30,11 @@ export const logError = (
   _res: Response,
   next: NextFunction
 ) => {
-  if (process.env.NODE_ENV !== "test") {
-    console.error(`${err.name}: ${err.message}`);
-  }
+  if (process.env.NODE_ENV === "test") return next(err);
+
+  if (err.name === "UnauthorizedError") return next(err);
+
+  console.error(`${err.name}: ${err.message}`);
   next(err);
 };
 

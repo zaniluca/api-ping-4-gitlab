@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
     "sourceMap": true,
+    "sourceRoot": "/",
     "outDir": "dist",
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "importsNotUsedAsValues": "error"
+    "importsNotUsedAsValues": "error",
+    "skipLibCheck": true,
+    "types": ["vitest/globals"]
   }
 }
