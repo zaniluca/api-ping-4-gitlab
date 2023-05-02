@@ -94,7 +94,6 @@ router.get("/callback", async (req, res) => {
     const accessToken = getAccessToken({
       uid: alreadyExistingUser.id,
       hookId: alreadyExistingUser.hookId,
-      email: alreadyExistingUser.email,
     });
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
@@ -156,7 +155,6 @@ router.get("/callback", async (req, res) => {
   const accessToken = getAccessToken({
     uid: user.id,
     hookId: user.hookId,
-    email: user.email,
   });
   const refreshToken = getRefreshToken(user.id);
 

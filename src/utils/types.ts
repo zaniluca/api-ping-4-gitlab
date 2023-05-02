@@ -5,7 +5,6 @@ import type { JwtPayload } from "jsonwebtoken";
 export type CustomJWTClaims = JwtPayload & {
   uid: string;
   hookId?: string | null;
-  email?: string | null;
 };
 
 export interface RequestWithPayload<T> extends Request {

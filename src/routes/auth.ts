@@ -61,7 +61,6 @@ router.post(
       accessToken: getAccessToken({
         uid: user.id,
         hookId: user.hookId,
-        email: user.email,
       }),
       refreshToken: getRefreshToken(user.id),
     });
@@ -92,7 +91,7 @@ router.post(
       return next(new ErrorWithStatus(409, "User already exists"));
     }
 
-    let user: Pick<User, "id" | "hookId" | "email">;
+    let user: Pick<User, "id" | "hookId">;
 
     if (isAnonymous) {
       console.log("Upgrading anonymous user to permanent user");
@@ -107,7 +106,6 @@ router.post(
         },
         select: {
           id: true,
-          email: true,
           hookId: true,
         },
       });
@@ -120,7 +118,6 @@ router.post(
         },
         select: {
           id: true,
-          email: true,
           hookId: true,
         },
       });
@@ -131,7 +128,6 @@ router.post(
       accessToken: getAccessToken({
         uid: user.id,
         hookId: user.hookId,
-        email: user.email,
       }),
       refreshToken: getRefreshToken(user.id),
     });
@@ -155,7 +151,6 @@ router.post(
       accessToken: getAccessToken({
         uid: payload.uid,
         hookId: payload.hookId,
-        email: payload.email,
       }),
       refreshToken: getRefreshToken(payload.uid),
     });
