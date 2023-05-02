@@ -91,7 +91,11 @@ router.get("/callback", async (req, res) => {
 
   // Login
   if (alreadyExistingUser) {
-    const accessToken = getAccessToken(alreadyExistingUser.id);
+    const accessToken = getAccessToken({
+      uid: alreadyExistingUser.id,
+      hookId: alreadyExistingUser.hookId,
+      email: alreadyExistingUser.email,
+    });
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
@@ -149,7 +153,11 @@ router.get("/callback", async (req, res) => {
     throw e;
   }
 
-  const accessToken = getAccessToken(user.id);
+  const accessToken = getAccessToken({
+    uid: user.id,
+    hookId: user.hookId,
+    email: user.email,
+  });
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(
