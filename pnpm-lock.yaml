@@ -4,8 +4,9 @@ specifiers:
   '@commitlint/cli': ^17.0.3
   '@commitlint/config-conventional': ^17.0.3
   '@prisma/client': ^4.8.0
+  '@sentry/cli': ^2.19.4
   '@sentry/integrations': ^7.46.0
-  '@sentry/node': ^7.46.0
+  '@sentry/node': ^7.57.0
   '@sentry/profiling-node': ^0.3.0
   '@sentry/tracing': ^7.46.0
   '@types/bcrypt': ^5.0.0
@@ -39,8 +40,9 @@ specifiers:
 
 dependencies:
   '@prisma/client': 4.8.0_prisma@4.8.0
+  '@sentry/cli': 2.19.4
   '@sentry/integrations': 7.46.0
-  '@sentry/node': 7.46.0
+  '@sentry/node': 7.57.0
   '@sentry/profiling-node': 0.3.0
   '@sentry/tracing': 7.46.0
   axios: 1.1.2
@@ -558,12 +560,47 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@sentry-internal/tracing/7.57.0:
+    resolution: {integrity: sha512-tpViyDd8AhQGYYhI94xi2aaDopXOPfL2Apwrtb3qirWkomIQ2K86W1mPmkce+B0cFOnW2Dxv/ZTFKz6ghjK75A==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/core': 7.57.0
+      '@sentry/types': 7.57.0
+      '@sentry/utils': 7.57.0
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/cli/2.19.4:
+    resolution: {integrity: sha512-wsSr2O/GVgr/i+DYtie+DNhODyI+HL7F5/0t1HwWMjHJWm4+5XTEauznYgbh2mewkzfUk9+t0CPecA82lEgspg==}
+    engines: {node: '>= 10'}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      https-proxy-agent: 5.0.1
+      node-fetch: 2.6.7
+      progress: 2.0.3
+      proxy-from-env: 1.1.0
+      which: 2.0.2
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
   /@sentry/core/7.46.0:
     resolution: {integrity: sha512-BnNHGh/ZTztqQedFko7vb2u6yLs/kWesOQNivav32ZbsEpVCjcmG1gOJXh2YmGIvj3jXOC9a4xfIuh+lYFcA6A==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.46.0
       '@sentry/utils': 7.46.0
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/core/7.57.0:
+    resolution: {integrity: sha512-l014NudPH0vQlzybtXajPxYFfs9w762NoarjObC3gu76D1jzBBFzhdRelkGpDbSLNTIsKhEDDRpgAjBWJ9icfw==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.57.0
+      '@sentry/utils': 7.57.0
       tslib: 1.14.1
     dev: false
 
@@ -587,14 +624,14 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/node/7.46.0:
-    resolution: {integrity: sha512-+GrgJMCye2WXGarRiU5IJHCK27xg7xbPc2XjGojBKbBoZfqxVAWbXEK4bnBQgRGP1pCmrU/M6ZhVgR3dP580xA==}
+  /@sentry/node/7.57.0:
+    resolution: {integrity: sha512-63mjyUVM6sfJFVQ5TGVRVGUsoEfESl5ABzIW1W0s9gUiQPaG8SOdaQJglb2VNrkMYxnRHgD8Q9LUh/qcmUyPGw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/tracing': 7.46.0
-      '@sentry/core': 7.46.0
-      '@sentry/types': 7.46.0
-      '@sentry/utils': 7.46.0
+      '@sentry-internal/tracing': 7.57.0
+      '@sentry/core': 7.57.0
+      '@sentry/types': 7.57.0
+      '@sentry/utils': 7.57.0
       cookie: 0.4.2
       https-proxy-agent: 5.0.1
       lru_map: 0.3.3
@@ -609,7 +646,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@sentry/hub': 7.46.0
-      '@sentry/node': 7.46.0
+      '@sentry/node': 7.57.0
       '@sentry/tracing': 7.46.0
       '@sentry/types': 7.46.0
       '@sentry/utils': 7.46.0
@@ -634,11 +671,24 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
+  /@sentry/types/7.57.0:
+    resolution: {integrity: sha512-D7ifoUfxuVCUyktIr5Gc+jXUbtcUMmfHdTtTbf1XCZHua5mJceK9wtl3YCg3eq/HK2Ppd52BKnTzEcS5ZKQM+w==}
+    engines: {node: '>=8'}
+    dev: false
+
   /@sentry/utils/7.46.0:
     resolution: {integrity: sha512-elRezDAF84guMG0OVIIZEWm6wUpgbda4HGks98CFnPsrnMm3N1bdBI9XdlxYLtf+ir5KsGR5YlEIf/a0kRUwAQ==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.46.0
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/utils/7.57.0:
+    resolution: {integrity: sha512-YXrkMCiNklqkXctn4mKYkrzNCf/dfVcRUQrkXjeBC+PHXbcpPyaJgInNvztR7Skl8lE3JPGPN4v5XhLxK1bUUg==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.57.0
       tslib: 1.14.1
     dev: false
 
@@ -2847,6 +2897,11 @@ packages:
 
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
+    dev: false
+
+  /progress/2.0.3:
+    resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
+    engines: {node: '>=0.4.0'}
     dev: false
 
   /promise-inflight/1.0.1:
