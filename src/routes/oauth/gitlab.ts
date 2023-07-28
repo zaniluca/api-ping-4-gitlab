@@ -10,8 +10,10 @@ const router = Router();
 
 const APP_REDIRECT_SCHEME =
   process.env.NODE_ENV === "production"
-    ? "ping4gitlab://"
-    : "exp://localhost:19000/--/";
+    ? "com.zaniluca.ping4gitlab://"
+    : process.env.ANDROID_EMULATOR
+    ? "exp://10.0.2.2:8081/--/" // Android emulator w/ Expo
+    : "exp://localhost:8081/--/"; // iOS simulator w/ Expo
 
 type GitLabTokenResponse = {
   access_token: string;
@@ -80,6 +82,7 @@ router.get("/callback", async (req, res) => {
     profile = data;
   } catch (error) {
     Sentry.captureException(error);
+    console.error("Error while authenticating with GitLab", error);
     return redirectWithError(res, "Couldn't authenticate with GitLab");
   }
 
@@ -113,10 +116,11 @@ router.get("/callback", async (req, res) => {
             id: state as string,
           },
         });
-      } catch {
+      } catch (error) {
+        console.error("Error while retriving user from state: ", error);
         return redirectWithError(
           res,
-          "The user with the given id does not exist"
+          "We couldn't associate your GitLab account with your email password account. Please try again."
         );
       }
 
@@ -149,6 +153,7 @@ router.get("/callback", async (req, res) => {
         );
       }
     }
+    Sentry.captureException(e);
     throw e;
   }
 
