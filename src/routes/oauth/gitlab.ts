@@ -10,8 +10,10 @@ const router = Router();
 
 const APP_REDIRECT_SCHEME =
   process.env.NODE_ENV === "production"
-    ? "ping4gitlab://"
-    : "exp://localhost:19000/--/";
+    ? "com.zaniluca.ping4gitlab://"
+    : process.env.ANDROID_EMULATOR
+    ? "exp://10.0.2.2:8081/--/" // Android emulator w/ Expo
+    : "exp://localhost:8081/--/"; // iOS simulator w/ Expo
 
 type GitLabTokenResponse = {
   access_token: string;
@@ -48,6 +50,16 @@ router.get("/authorize", async (req, res) => {
 });
 
 router.get("/callback", async (req, res) => {
+  if (req.query.error && req.query.error_description) {
+    console.error(
+      "Error on GitLab OAuth callback: ",
+      req.query.error,
+      req.query.error_description
+    );
+
+    return redirectWithError(res, req.query.error_description as string);
+  }
+
   const { code, state } = req.query;
 
   let profile: GitlabUserResponse;
@@ -92,7 +104,10 @@ router.get("/callback", async (req, res) => {
 
   // Login
   if (alreadyExistingUser) {
-    const accessToken = getAccessToken(alreadyExistingUser.id);
+    const accessToken = getAccessToken({
+      uid: alreadyExistingUser.id,
+      hookId: alreadyExistingUser.hookId,
+    });
     const refreshToken = getRefreshToken(alreadyExistingUser.id);
 
     return res.redirect(
@@ -152,7 +167,10 @@ router.get("/callback", async (req, res) => {
     throw e;
   }
 
-  const accessToken = getAccessToken(user.id);
+  const accessToken = getAccessToken({
+    uid: user.id,
+    hookId: user.hookId,
+  });
   const refreshToken = getRefreshToken(user.id);
 
   return res.redirect(

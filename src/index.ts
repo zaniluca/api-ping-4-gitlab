@@ -5,7 +5,12 @@ import notification from "./routes/notification";
 import oauth from "./routes/oauth";
 import auth from "./routes/auth";
 import webhook from "./routes/webhook";
-import { handleError, logError, requestLogger } from "./middlewares";
+import {
+  attachSentryUserInfo,
+  handleError,
+  logError,
+  requestLogger,
+} from "./middlewares";
 import { expressjwt } from "express-jwt";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
@@ -31,7 +36,8 @@ Sentry.init({
     new Profiling.ProfilingIntegration(),
     // RewriteFrames is needed to show the correct source code in Sentry when using TypeScript
     new RewriteFrames({
-      root: global.__dirname,
+      // Why process.cwd() instead of global.__dirname ?: https://stackoverflow.com/a/63848735/12661017
+      root: process.cwd(),
     }),
   ],
   tracesSampleRate: 0.33,
@@ -58,6 +64,7 @@ Sentry.init({
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(requestLogger);
+app.use(attachSentryUserInfo);
 app.use(express.json());
 app.use(
   "/user",
