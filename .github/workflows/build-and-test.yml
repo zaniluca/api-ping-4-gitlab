@@ -23,12 +23,10 @@ jobs:
       WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         uses: ./.github/actions/pnpm-install
-        with:
-          node-version-file: ".nvmrc"
 
       - name: Build
         run: pnpm tsc
