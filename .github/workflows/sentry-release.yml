@@ -9,6 +9,7 @@ on:
     paths:
       - "**.ts"
       - "**.js"
+      - "**.yml"
 
 jobs:
   build:

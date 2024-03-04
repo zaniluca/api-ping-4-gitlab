@@ -12,6 +12,7 @@ on:
       - "**.js"
       - "**.json"
       - "**.lock"
+      - "**.yml"
 
 jobs:
   build-and-test:
