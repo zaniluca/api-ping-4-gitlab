@@ -46,13 +46,13 @@ Sentry.init({
     // Remove the cursor from the transaction
     event.transaction = event.transaction?.replace(
       /cursor=\w+/,
-      "cursor={cursor}"
+      "cursor={cursor}",
     );
 
     // Remove the notification id after /notification/ from the transaction
     event.transaction = event.transaction?.replace(
       /\/notification\/\w+\d+/,
-      "/notification/{id}"
+      "/notification/{id}",
     );
 
     return event;
@@ -71,14 +71,14 @@ app.use(
   expressjwt({
     secret: process.env.JWT_ACCESS_SECRET!,
     algorithms: ["HS256"],
-  })
+  }),
 );
 app.use(
   "/notification",
   expressjwt({
     secret: process.env.JWT_ACCESS_SECRET!,
     algorithms: ["HS256"],
-  })
+  }),
 );
 
 // Routes
@@ -88,12 +88,17 @@ app.use("/notification", notification);
 app.use("/", auth);
 app.use("/", webhook);
 app.get("/health", (_req, res) => res.send("OK"));
+app.get("/account-deletion-info", (_req, res) =>
+  res.send(
+    "If you want to get your account deleted you can either enter the app and delete your account in the settings screen or send an email to support@zaniluca.com with the subject 'Delete my account' along with the credentials you used to sign up.",
+  ),
+);
 
 // Error handling
 app.use(
   Sentry.Handlers.errorHandler({
     shouldHandleError: (error) => error.status === 500,
-  })
+  }),
 );
 app.use(logError);
 app.use(handleError);
