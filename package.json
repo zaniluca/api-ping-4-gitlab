@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@prisma/client": "^4.8.0",
+    "@prisma/instrumentation": "^5.22.0",
     "@sentry/node": "^8.38.0",
     "@sentry/profiling-node": "^8.38.0",
     "axios": "^1.1.2",

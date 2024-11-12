@@ -1,6 +1,6 @@
+import "dotenv/config";
 import "./utils/sentry"; // Must be imported before other files
 import express from "express";
-import "dotenv/config";
 import user from "./routes/user";
 import notification from "./routes/notification";
 import oauth from "./routes/oauth";
