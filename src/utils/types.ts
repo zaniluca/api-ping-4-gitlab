@@ -23,7 +23,7 @@ export type WebhookPayload = {
   text?: string;
   html?: string;
   subject: string;
-  dkim: string;
+  // dkim: string;
 };
 
 export type Headers = ProjectHeaders &
