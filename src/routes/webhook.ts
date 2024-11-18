@@ -105,14 +105,13 @@ router.post("/webhook", async (req, res, next) => {
     payload = {
       to: fields.to?.[0] ?? "",
       subject: fields.subject?.[0] ?? "",
-      text: fields.text?.[0] ?? "",
-      html: fields.html?.[0] ?? "",
+      text: fields.text?.[0],
+      html: fields.html?.[0],
       headers: fields.headers?.[0] ?? "",
-      from: fields.from?.[0] ?? "",
     };
 
-    if (Object.values(payload).some((v) => !v)) {
-      console.warn("Some fields are missing", payload);
+    if (!payload.headers || !payload.to || !payload.subject) {
+      console.warn("Webhook payload is missing some fields", payload);
       Sentry.captureEvent({
         message: "Webhook payload is missing some fields",
         extra: payload,

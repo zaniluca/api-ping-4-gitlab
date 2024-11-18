@@ -18,7 +18,7 @@ export interface AuthRequestWithPayload<T>
 
 export type WebhookPayload = {
   headers: string;
-  from: string;
+  // from: string;
   to: string;
   text?: string;
   html?: string;
