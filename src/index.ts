@@ -55,6 +55,9 @@ app.get("/account-deletion-info", (_req, res) =>
   )
 );
 
+// Static files
+app.use(express.static("public"));
+
 // Error handling
 Sentry.setupExpressErrorHandler(app, {
   shouldHandleError: (error) => {
