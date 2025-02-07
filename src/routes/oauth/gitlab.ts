@@ -1,11 +1,11 @@
 import { Prisma, User } from "@prisma/client";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Response, Router } from "express";
 import prisma from "../../../prisma/client";
 import { getAccessToken, getRefreshToken } from "../../utils/common";
-import generateUniqueHook from "../../utils/hook-generator";
 import * as Sentry from "@sentry/node";
 import { APP_URL_SCHEME } from "../../utils/constants";
+import { generateUniqueHook, getEmailFromHook } from "../../utils/hook";
 
 const router = Router();
 
@@ -35,6 +35,65 @@ const redirect = (res: Response, url: string) =>
 const redirectWithError = (res: Response, error: string) =>
   redirect(res, `${APP_URL_SCHEME}login?error=${encodeURIComponent(error)}`);
 
+const addEmailToGitlab = async (token: string, email: string) => {
+  console.log("Adding notification email: ", email);
+  try {
+    await axios.post(
+      "https://gitlab.com/api/v4/user/emails",
+      {
+        email: email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err: unknown | AxiosError) {
+    if (axios.isAxiosError(err)) {
+      console.error("Couldn't add notification email: ", err.response?.data);
+      Sentry.captureMessage("Couldn't add notification email", {
+        extra: err.response?.data,
+      });
+      return;
+    }
+
+    console.error(
+      "Recived unknwon error while adding notification email: ",
+      err
+    );
+  }
+};
+
+const setHookEmailForNotifications = async (token: string, email: string) => {
+  try {
+    await axios.put(
+      "https://gitlab.com/api/v4/notification_settings",
+      {
+        notification_email: email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err: unknown | AxiosError) {
+    if (axios.isAxiosError(err)) {
+      console.error("Couldn't set notification email: ", err.response?.data);
+      Sentry.captureMessage("Couldn't set notification email", {
+        extra: err.response?.data,
+      });
+      return;
+    }
+
+    console.error(
+      "Recived unknwon error while setting notification email: ",
+      err
+    );
+  }
+};
+
 router.get("/authorize", async (req, res) => {
   return res.redirect(
     "https://gitlab.com/oauth/authorize?" +
@@ -44,7 +103,7 @@ router.get("/authorize", async (req, res) => {
           "host"
         )}/oauth/gitlab/callback`,
         response_type: "code",
-        scope: "read_user",
+        scope: "read_user api",
         state: req.query.state as string,
       })
   );
@@ -64,6 +123,7 @@ router.get("/callback", async (req, res) => {
   const { code, state } = req.query;
 
   let profile: GitlabUserResponse;
+  let gitlabToken: string;
   try {
     const { data: tokens } = await axios.post<GitLabTokenResponse>(
       "https://gitlab.com/oauth/token",
@@ -81,11 +141,13 @@ router.get("/callback", async (req, res) => {
       }
     );
 
+    gitlabToken = tokens.access_token;
+
     const { data } = await axios.get<GitlabUserResponse>(
       "https://gitlab.com/api/v4/user",
       {
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
+          Authorization: `Bearer ${gitlabToken}`,
         },
       }
     );
@@ -168,6 +230,8 @@ router.get("/callback", async (req, res) => {
     Sentry.captureException(e);
     throw e;
   }
+
+  await addEmailToGitlab(gitlabToken, getEmailFromHook(user.hookId!));
 
   const accessToken = getAccessToken({
     uid: user.id,

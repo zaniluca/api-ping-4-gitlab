@@ -23,9 +23,9 @@ import {
   ErrorWithStatus,
 } from "../utils/errors";
 import { expressjwt } from "express-jwt";
-import generateUniqueHook from "../utils/hook-generator";
 import { validate } from "../middlewares";
 import type { InferType } from "yup";
+import { generateUniqueHook } from "../utils/hook";
 
 const router = Router();
 
