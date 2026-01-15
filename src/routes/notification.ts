@@ -21,7 +21,7 @@ notification.get(
     let whereCondition = eq(notifications.userId, userId);
 
     if (cursor) {
-      // Cursor-based pagination: get records where id > cursor
+      // Cursor-based pagination: get records where id < cursor
       whereCondition = and(
         eq(notifications.userId, userId),
         lt(notifications.id, cursor)
@@ -32,8 +32,8 @@ notification.get(
       .select()
       .from(notifications)
       .where(whereCondition)
-      .orderBy(desc(notifications.recived))
-      .limit(limit + 1); // Fetch one extra to check if there are more results
+      .orderBy(desc(notifications.id))
+      .limit(limit + 1);
 
     const [{ value: totalCount }] = await c.var.db
       .select({ value: count() })
@@ -42,7 +42,16 @@ notification.get(
 
     c.header("X-Total-Count", totalCount.toString());
 
-    return c.json(notificationsList);
+    const hasMore = notificationsList.length > limit;
+    const items = hasMore
+      ? notificationsList.slice(0, limit)
+      : notificationsList;
+
+    return c.json({
+      data: items,
+      hasMore,
+      nextCursor: hasMore ? items[items.length - 1].id : null,
+    });
   }
 );
 
