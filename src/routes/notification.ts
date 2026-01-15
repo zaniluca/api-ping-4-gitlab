@@ -1,72 +1,79 @@
-import { Router } from "express";
-import prisma from "../../prisma/client";
-import type { Request as ExpressJwtRequest } from "express-jwt";
-import type { Notification } from "@prisma/client";
-import type { AuthRequestWithPayload } from "../utils/types";
+import { Hono } from "hono";
+import { notifications } from "../db/schema";
+import {
+  notificationListQuerySchema,
+  notificationUpdateBodySchema,
+} from "../utils/validation";
+import { eq, desc, count, and, lt } from "drizzle-orm";
+import { AppEnv } from "../utils/types";
+import { validate } from "../middlewares";
 
-const router = Router();
+const notification = new Hono<AppEnv>();
 
-router.get("/list", async (req: ExpressJwtRequest, res) => {
-  const { cursor } = req.query;
+notification.get(
+  "/list",
+  validate("query", notificationListQuerySchema),
+  async (c) => {
+    const payload = c.get("jwtPayload");
+    const userId = payload?.uid as string;
+    const { cursor, limit } = c.req.valid("query");
 
-  let paginationParams = {};
-  if (cursor) {
-    paginationParams = {
-      take: 50,
-      skip: 1,
-      cursor: {
-        id: cursor,
-      },
-    };
+    let whereCondition = eq(notifications.userId, userId);
+
+    if (cursor) {
+      // Cursor-based pagination: get records where id > cursor
+      whereCondition = and(
+        eq(notifications.userId, userId),
+        lt(notifications.id, cursor)
+      )!;
+    }
+
+    const notificationsList = await c.var.db
+      .select()
+      .from(notifications)
+      .where(whereCondition)
+      .orderBy(desc(notifications.recived))
+      .limit(limit + 1); // Fetch one extra to check if there are more results
+
+    const [{ value: totalCount }] = await c.var.db
+      .select({ value: count() })
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+
+    c.header("X-Total-Count", totalCount.toString());
+
+    return c.json(notificationsList);
   }
+);
 
-  const [notifications, totalCount] = await prisma.$transaction([
-    prisma.notification.findMany({
-      where: {
-        userId: req.auth?.uid,
-      },
-      orderBy: {
-        recived: "desc",
-      },
-      take: 50,
-      ...paginationParams,
-    }),
+notification.get("/:id", async (c) => {
+  const id = c.req.param("id");
 
-    prisma.notification.count({
-      where: {
-        userId: req.auth?.uid,
-      },
-    }),
-  ]);
+  const foundNotification = await c.var.db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.id, id))
+    .get();
 
-  res.setHeader("X-Total-Count", totalCount);
-
-  return res.json(notifications);
+  return c.json(foundNotification);
 });
 
-router.get("/:id", async (req: ExpressJwtRequest, res) => {
-  const notification = await prisma.notification.findUnique({
-    where: {
-      id: req.params.id,
-    },
-  });
+notification.put(
+  "/:id",
+  validate("json", notificationUpdateBodySchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const { viewed } = c.req.valid("json");
 
-  return res.json(notification);
-});
+    const updatedNotification = await c.var.db
+      .update(notifications)
+      .set({ viewed })
+      .where(eq(notifications.id, id))
+      .returning()
+      .get();
 
-router.put("/:id", async (req: AuthRequestWithPayload<Notification>, res) => {
-  const { headers, ...rest } = req.body;
+    return c.json(updatedNotification);
+  }
+);
 
-  const notification = await prisma.notification.update({
-    where: {
-      id: req.params.id,
-    },
-    data: {
-      ...rest,
-    },
-  });
-
-  return res.json(notification);
-});
-
-export default router;
+export default notification;

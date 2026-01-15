@@ -2,7 +2,7 @@ import type { User } from "@prisma/client";
 import request from "supertest";
 import app from "..";
 import prismaMock from "../../prisma/mocked-client";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 describe("POST /webhook", () => {
   it("Rejects requests without valid secret", async () => {

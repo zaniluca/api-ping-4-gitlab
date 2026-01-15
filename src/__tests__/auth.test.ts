@@ -1,5 +1,5 @@
 import request from "supertest";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import app from "..";
 import type { User } from "@prisma/client";
 import { getAccessToken, getRefreshToken } from "../utils/common";

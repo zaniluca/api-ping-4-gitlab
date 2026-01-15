@@ -1,73 +1,65 @@
-import type { NextFunction, Request, Response } from "express";
-import morgan from "morgan";
-import { BadRequestError, ErrorWithStatus } from "./utils/errors";
-import yup, { ValidationError } from "yup";
-import * as Sentry from "@sentry/node";
-import type { Request as ExpressJwtRequest } from "express-jwt";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
+import * as Sentry from "@sentry/cloudflare";
+import { AppEnv } from "./utils/types";
+import { ValidationTargets } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { ZodSchema } from "zod";
 
-export const handleError = (
-  err: Error | ErrorWithStatus,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-) => {
-  if (err.name === "ErrorWithStatus") {
-    return res.status((err as ErrorWithStatus).status).json({
-      message: err.message,
-    });
-  } else if (err.name === "UnauthorizedError") {
-    return res.status(403).json({
-      message: "Unauthorized",
-    });
+/**
+ * Middleware to attach user info to Sentry context
+ * Should be used after JWT middleware
+ */
+export const attachSentryUserInfo = createMiddleware<AppEnv>(
+  async (c, next) => {
+    const payload = c.get("jwtPayload");
+
+    if (payload?.uid) {
+      Sentry.setUser({
+        id: payload.uid as string,
+        username: payload.hookId as string,
+      });
+    }
+
+    await next();
   }
-
-  return res.status(500).json({
-    message: "Oops! Something went wrong",
-  });
-};
-
-export const logError = (
-  err: Error,
-  _req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  if (process.env.NODE_ENV === "test") return next(err);
-
-  if (err.name === "UnauthorizedError") return next(err);
-
-  console.error(`${err.name}: ${err.message}`);
-  next(err);
-};
-
-export const requestLogger = morgan(
-  process.env.NODE_ENV === "production" ? "short" : "dev",
-  { skip: () => process.env.NODE_ENV === "test" }
 );
 
-export const validate =
-  ({ bodySchema }: Partial<{ bodySchema: yup.AnyObjectSchema }>) =>
-  async (req: Request, _res: Response, next: NextFunction) => {
-    try {
-      await bodySchema?.validate(req.body);
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        next(new BadRequestError(error.errors[0]));
-      }
+/**
+ * Custom error logger middleware
+ */
+export const errorLogger = createMiddleware<AppEnv>(async (c, next) => {
+  await next();
+
+  // Check if there's an error in the response
+  if (c.error) {
+    // Skip logging for test environment
+    if (process.env.NODE_ENV === "test") return;
+
+    // Skip logging for UnauthorizedError (401/403)
+    if (c.error instanceof HTTPException) {
+      const status = c.error.status;
+      if (status === 401 || status === 403) return;
     }
-    next();
-  };
 
-export const attachSentryUserInfo = (
-  req: ExpressJwtRequest,
-  _res: Response,
-  next: NextFunction
-) => {
-  if (!req.auth?.uid) return next();
+    console.error(`${c.error.name}: ${c.error.message}`);
+  }
+});
 
-  Sentry.setUser({
-    id: req.auth?.uid,
-    username: req.auth?.hookId,
+export const validate = <
+  Target extends keyof ValidationTargets,
+  T extends ZodSchema
+>(
+  target: Target,
+  schema: T
+) =>
+  zValidator(target, schema, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        {
+          message: result.error.issues[0]?.message || "Validation failed",
+        },
+        400
+      );
+    }
   });
-  next();
-};

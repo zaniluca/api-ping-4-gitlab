@@ -1,15 +1,15 @@
-import type { User } from "@prisma/client";
+import { users } from "../db/schema";
 
 // Public facing fields for user model that can be sent to the client.
-export const USER_PUBLIC_FIELDS: Partial<Record<keyof User, boolean>> = {
-  id: true,
-  email: true,
-  hookId: true,
-  expoPushTokens: true,
-  onboardingCompleted: true,
-  mutedUntil: true,
-  gitlabId: true,
-};
+export const USER_PUBLIC_FIELDS = {
+  id: users.id,
+  email: users.email,
+  hookId: users.hookId,
+  expoPushTokens: users.expoPushTokens,
+  onboardingCompleted: users.onboardingCompleted,
+  mutedUntil: users.mutedUntil,
+  gitlabId: users.gitlabId,
+} as const;
 
 export const APP_URL_SCHEME =
   process.env.NODE_ENV === "production"

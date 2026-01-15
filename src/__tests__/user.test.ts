@@ -1,5 +1,5 @@
 import request from "supertest";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import app from "..";
 import { USER_PUBLIC_FIELDS } from "../utils/constants";
 import { getAccessToken } from "../utils/common";
