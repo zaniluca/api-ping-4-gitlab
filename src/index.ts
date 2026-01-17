@@ -25,13 +25,13 @@ app.use("*", async (c, next) => {
 
 // Global error handler
 app.onError((err, c) => {
-  if (process.env.NODE_ENV === "test") {
-    return c.json({ message: "I'm in test mode" }, 500);
-  }
-
   if (err instanceof HTTPException) {
     const status = err.status;
     if (status >= 500) {
+      if (process.env.NODE_ENV === "test") {
+        return c.json({ message: "I'm in test mode" }, 500);
+      }
+
       console.error("Unhandled HTTPException:", err);
       Sentry.captureException(err);
       return c.json({ message: "Oops! Something went wrong" }, status);
@@ -52,8 +52,8 @@ app.route("/", webhook);
 app.get("/health", (c) => c.text("OK"));
 app.get("/account-deletion-info", (c) =>
   c.text(
-    "If you want to get your account deleted you can either enter the app and delete your account in the settings screen or send an email to support@zaniluca.com with the subject 'Delete my account' along with the credentials you used to sign up."
-  )
+    "If you want to get your account deleted you can either enter the app and delete your account in the settings screen or send an email to support@zaniluca.com with the subject 'Delete my account' along with the credentials you used to sign up.",
+  ),
 );
 
 // Protected routes
@@ -88,6 +88,8 @@ export const scheduled: ExportedHandlerScheduledHandler<
   ctx.waitUntil(deleteOldNotifications(env));
 };
 
+export const testApp = app;
+
 export default Sentry.withSentry((env: AppEnv["Bindings"]) => {
   return {
     dsn: env.SENTRY_DSN,
@@ -102,13 +104,13 @@ export default Sentry.withSentry((env: AppEnv["Bindings"]) => {
       // Remove the cursor from the transaction
       event.transaction = event.transaction?.replace(
         /cursor=\w+/,
-        "cursor={cursor}"
+        "cursor={cursor}",
       );
 
       // Remove the notification id after /notification/ from the transaction
       event.transaction = event.transaction?.replace(
         /\/notification\/\w+\d+/,
-        "/notification/{id}"
+        "/notification/{id}",
       );
 
       return event;
