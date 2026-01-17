@@ -13,7 +13,7 @@ import { parseHeaders } from "../utils/common";
 import { HTTPException } from "hono/http-exception";
 import * as Sentry from "@sentry/cloudflare";
 import { APP_URL_SCHEME } from "../utils/constants";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 
 const webhook = new Hono<AppEnv>();
 
@@ -136,9 +136,26 @@ webhook.post("/webhook", async (c) => {
     }
     user = foundUser;
 
-    // Create notification
     let notification: Notification;
     try {
+      const existingNotification = await c.var.db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.userId, user.id),
+            eq(notifications.contentHash, contentHash),
+          ),
+        )
+        .get();
+
+      if (existingNotification) {
+        console.warn(
+          `Duplicate notification detected for user ${user.id}, skipping creation.`,
+        );
+        return c.text("OK", 200);
+      }
+
       const newNotification = await c.var.db
         .insert(notifications)
         .values({
@@ -153,13 +170,8 @@ webhook.post("/webhook", async (c) => {
         .get();
 
       notification = newNotification;
-    } catch (e: any) {
-      // Check for unique constraint violation (duplicate contentHash)
-      if (e.message?.includes("UNIQUE constraint failed")) {
-        console.warn("Notification already exists");
-        return c.text("OK", 200);
-      }
-      console.error("Unknown Error creating notification", e);
+    } catch (e) {
+      console.error("Couldn't create notification", e);
       Sentry.captureException(e);
       return c.text("Internal Server Error", 500);
     }
@@ -231,7 +243,7 @@ webhook.post("/webhook", async (c) => {
                     ticket_details: ticket.details,
                     notification_payload: notificationPayload,
                   },
-                }
+                },
               );
 
               if (
@@ -240,7 +252,7 @@ webhook.post("/webhook", async (c) => {
                 ticket.details.error === "DeviceNotRegistered"
               ) {
                 console.warn(
-                  `Invalid push token detected: ${ticket.details.expoPushToken}`
+                  `Invalid push token detected: ${ticket.details.expoPushToken}`,
                 );
               }
             }
@@ -267,7 +279,7 @@ webhook.post("/webhook", async (c) => {
             continue;
           } else if (receipt.status === "error") {
             console.error(
-              `There was an error sending a notification: ${receipt.message}`
+              `There was an error sending a notification: ${receipt.message}`,
             );
             Sentry.captureException(
               new Error(`Push receipt error: ${receipt.message}`),
@@ -276,7 +288,7 @@ webhook.post("/webhook", async (c) => {
                   receipt_id: receiptId,
                   receipt_details: receipt.details,
                 },
-              }
+              },
             );
 
             if (receipt.details && receipt.details.error) {
