@@ -11,19 +11,21 @@ export async function deleteOldNotifications(env: AppEnv["Bindings"]) {
 
   const twoYearsAgo = new Date();
   twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+  console.log(
+    `Deleting notifications older than: ${twoYearsAgo.toISOString()}`,
+  );
   try {
-    const [deleted] = await db
+    const result = await db
       .delete(notifications)
-      .where(lt(notifications.recived, twoYearsAgo))
-      .returning({ count: count() });
+      .where(lt(notifications.recived, twoYearsAgo));
 
-    console.log(`Deleted ${deleted.count} old notifications`);
+    console.log(`Deleted ${result.meta.changes || 0} old notifications`);
   } catch (error) {
     console.error("Error deleting old notifications:", error);
     Sentry.withScope((scope) => {
       scope.setTag("cron", true);
       scope.setContext("Cron", {
-        name: "oldNotificationDeletionCron",
+        name: "deleteOldNotifications",
         schedule: EVERY_DAY_AT_MIDNIGHT_CRON,
       });
       scope.setExtra("date", twoYearsAgo);

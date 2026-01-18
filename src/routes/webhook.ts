@@ -153,7 +153,7 @@ webhook.post("/webhook", async (c) => {
         console.warn(
           `Duplicate notification detected for user ${user.id}, skipping creation.`,
         );
-        return c.text("OK", 200);
+        return c.text("Duplicate notification", 409);
       }
 
       const newNotification = await c.var.db

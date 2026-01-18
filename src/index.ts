@@ -81,16 +81,23 @@ app.notFound((c) => {
   return c.json({ message: "Not Found" }, 404);
 });
 
-export const scheduled: ExportedHandlerScheduledHandler<
-  AppEnv["Bindings"]
-> = async (event, env, ctx) => {
+const scheduled: ExportedHandlerScheduledHandler<AppEnv["Bindings"]> = async (
+  event,
+  env,
+  _ctx,
+) => {
   console.log("Running scheduled event:", event.cron);
-  ctx.waitUntil(deleteOldNotifications(env));
+  switch (event.cron) {
+    case "0 0 * * *":
+      // Every day at midnight
+      await deleteOldNotifications(env);
+      break;
+  }
 };
 
 export const testApp = app;
 
-export default Sentry.withSentry((env: AppEnv["Bindings"]) => {
+const withSentry = Sentry.withSentry((env: AppEnv["Bindings"]) => {
   return {
     dsn: env.SENTRY_DSN,
     release: env.SENTRY_RELEASE,
@@ -117,3 +124,8 @@ export default Sentry.withSentry((env: AppEnv["Bindings"]) => {
     },
   };
 }, app);
+
+export default {
+  fetch: withSentry.fetch,
+  scheduled,
+};
