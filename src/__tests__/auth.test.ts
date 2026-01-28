@@ -1,9 +1,10 @@
 import request from "supertest";
 import bcrypt from "bcryptjs";
-import app from "..";
-import type { User } from "@prisma/client";
+import { testApp } from "..";
 import { getAccessToken, getRefreshToken } from "../utils/common";
-import prismaMock from "../../prisma/mocked-client";
+import { User } from "../db/schema";
+
+const app = testApp;
 
 const MOCK_USER: User = {
   id: "1",

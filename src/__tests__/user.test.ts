@@ -1,14 +1,17 @@
 import request from "supertest";
 import bcrypt from "bcryptjs";
-import app from "..";
+import { testApp } from "..";
 import { USER_PUBLIC_FIELDS } from "../utils/constants";
 import { getAccessToken } from "../utils/common";
-import prismaMock from "../../prisma/mocked-client";
+import drizzleMock from "../__mocks__/drizzle-mock";
+
+const app = testApp;
 
 const NEW_EMAIL = "updated@test.com";
 const NEW_HOOK = "updated";
 const NEW_PASSWORD = "Updated1234!";
 const NEW_PASSWORD_HASH = bcrypt.hashSync(NEW_PASSWORD, 10);
+const TEST_ACCESS_TOKEN_SECRET = "test_access_token_secret";
 
 describe("GET /user", () => {
   it("Fails if unauthorized", async () => {
@@ -36,7 +39,10 @@ describe("PUT /user", () => {
   it("Updates user data", async () => {
     await request(app)
       .put("/user")
-      .set("Authorization", "Bearer " + getAccessToken({ uid: "1" }))
+      .set(
+        "Authorization",
+        "Bearer " + getAccessToken({ uid: "1" }, TEST_ACCESS_TOKEN_SECRET),
+      )
       .send({
         email: NEW_EMAIL,
         hookId: NEW_HOOK,
@@ -60,7 +66,10 @@ describe("PUT /user", () => {
   it.skip("Updates user password", async () => {
     await request(app)
       .put("/user")
-      .set("Authorization", "Bearer " + getAccessToken({ uid: "1" }))
+      .set(
+        "Authorization",
+        "Bearer " + getAccessToken({ uid: "1" }, TEST_ACCESS_TOKEN_SECRET),
+      )
       .send({
         email: NEW_EMAIL,
         hookId: NEW_HOOK,
@@ -98,7 +107,10 @@ describe("DELETE /user", () => {
   it("Deletes user", async () => {
     await request(app)
       .delete("/user")
-      .set("Authorization", "Bearer " + getAccessToken({ uid: "1" }))
+      .set(
+        "Authorization",
+        "Bearer " + getAccessToken({ uid: "1" }, TEST_ACCESS_TOKEN_SECRET),
+      )
       .expect("Content-Type", /json/)
       .expect((res) => {
         expect(res.status).toBe(200);

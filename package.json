@@ -7,8 +7,9 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev --local --port 8080 --test-scheduled",
+    "build": "wrangler deploy --dry-run --outdir dist --upload-source-maps --var SENTRY_RELEASE:$(sentry-cli releases propose-version)",
     "deploy": "wrangler deploy --outdir dist --upload-source-maps --var SENTRY_RELEASE:$(sentry-cli releases propose-version)",
-    "sentry:sourcemaps": "dotenv -e .env -- _SENTRY_RELEASE=$(sentry-cli releases propose-version) && sentry-cli releases new $_SENTRY_RELEASE --org=$SENTRY_ORG --project=$SENTRY_PROJECT && sentry-cli sourcemaps upload --org=$SENTRY_ORG --project=$SENTRY_PROJECT --release=$_SENTRY_RELEASE --strip-prefix 'dist/..' dist",
+    "sentry:sourcemaps": "dotenv -e .env -- sh -c '_SENTRY_RELEASE=$(sentry-cli releases propose-version) && sentry-cli releases new $_SENTRY_RELEASE --org=$SENTRY_ORG --project=$SENTRY_PROJECT && sentry-cli sourcemaps upload --org=$SENTRY_ORG --project=$SENTRY_PROJECT --release=$_SENTRY_RELEASE --strip-prefix \"dist/..\" dist'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply ping-4-gitlab",
     "db:migrate:local": "wrangler d1 migrations apply ping-4-gitlab --local",
@@ -23,26 +24,23 @@
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
-    "@sentry/cli": "^2.38.2",
+    "@sentry/cli": "^2",
     "@types/jsonwebtoken": "^8.5.8",
-    "@types/node": "^17.0.45",
+    "@types/node": "^24.1.0",
     "@types/object-hash": "^2.2.1",
-    "@types/supertest": "^6.0.3",
     "cross-env": "^7.0.3",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.8",
     "husky": "^8.0.1",
-    "nodemon": "^3.1.7",
-    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^4.7.4",
+    "typescript": "^5.7.3",
     "vitest": "^4.0.16",
     "vitest-mock-extended": "^3.1.0",
     "wrangler": "^4.54.0"
   },
   "engines": {
-    "node": "^23.0.0",
+    "node": "^24.1.0",
     "pnpm": ">=10.0.0"
   },
   "dependencies": {

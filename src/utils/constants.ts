@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import { users } from "../db/schema";
 
 // Public facing fields for user model that can be sent to the client.
@@ -12,8 +13,8 @@ export const USER_PUBLIC_FIELDS = {
 } as const;
 
 export const APP_URL_SCHEME =
-  process.env.NODE_ENV === "production"
+  env.ENVIRONMENT === "production"
     ? "ping4gitlab://"
-    : process.env.ANDROID_EMULATOR
-    ? "exp://10.0.2.2:8081/--/" // Android emulator w/ Expo
-    : "exp://127.0.0.1:8081/--/"; // iOS simulator w/ Expo
+    : env.ANDROID_EMULATOR === "true"
+      ? "exp://10.0.2.2:8081/--/" // Android emulator w/ Expo
+      : "exp://127.0.0.1:8081/--/"; // iOS simulator w/ Expo

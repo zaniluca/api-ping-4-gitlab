@@ -28,7 +28,7 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) {
     const status = err.status;
     if (status >= 500) {
-      if (process.env.NODE_ENV === "test") {
+      if (c.env.ENVIRONMENT === "test") {
         return c.json({ message: "I'm in test mode" }, 500);
       }
 
@@ -102,7 +102,7 @@ const withSentry = Sentry.withSentry((env: AppEnv["Bindings"]) => {
     dsn: env.SENTRY_DSN,
     release: env.SENTRY_RELEASE,
     sendDefaultPii: true,
-    enabled: process.env.NODE_ENV === "production",
+    enabled: env.ENVIRONMENT === "production",
     tracesSampleRate: 0.05,
     profilesSampleRate: 0.05,
     // This env should be implicitly used by the SDK but let's make it explicit

@@ -14,11 +14,12 @@ import { HTTPException } from "hono/http-exception";
 import * as Sentry from "@sentry/cloudflare";
 import { APP_URL_SCHEME } from "../utils/constants";
 import { eq, count, and } from "drizzle-orm";
+import { env } from "cloudflare:workers";
 
 const webhook = new Hono<AppEnv>();
 
 const expo = new Expo({
-  accessToken: process.env.EXPO_ACCESS_TOKEN,
+  accessToken: env.EXPO_ACCESS_TOKEN,
   useFcmV1: true,
 });
 

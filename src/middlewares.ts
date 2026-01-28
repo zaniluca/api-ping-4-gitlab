@@ -22,7 +22,7 @@ export const attachSentryUserInfo = createMiddleware<AppEnv>(
     }
 
     await next();
-  }
+  },
 );
 
 /**
@@ -34,7 +34,7 @@ export const errorLogger = createMiddleware<AppEnv>(async (c, next) => {
   // Check if there's an error in the response
   if (c.error) {
     // Skip logging for test environment
-    if (process.env.NODE_ENV === "test") return;
+    if (c.env.ENVIRONMENT === "test") return;
 
     // Skip logging for UnauthorizedError (401/403)
     if (c.error instanceof HTTPException) {
@@ -48,10 +48,10 @@ export const errorLogger = createMiddleware<AppEnv>(async (c, next) => {
 
 export const validate = <
   Target extends keyof ValidationTargets,
-  T extends ZodSchema
+  T extends ZodSchema,
 >(
   target: Target,
-  schema: T
+  schema: T,
 ) =>
   zValidator(target, schema, (result, c) => {
     if (!result.success) {
@@ -59,7 +59,7 @@ export const validate = <
         {
           message: result.error.issues[0]?.message || "Validation failed",
         },
-        400
+        400,
       );
     }
   });
