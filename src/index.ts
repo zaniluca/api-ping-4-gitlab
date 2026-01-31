@@ -97,7 +97,7 @@ const scheduled: ExportedHandlerScheduledHandler<AppEnv["Bindings"]> = async (
 
 export const testApp = app;
 
-const withSentry = Sentry.withSentry((env: AppEnv["Bindings"]) => {
+const withSentry = Sentry.withSentry<AppEnv["Bindings"]>((env) => {
   return {
     dsn: env.SENTRY_DSN,
     release: env.SENTRY_RELEASE,
