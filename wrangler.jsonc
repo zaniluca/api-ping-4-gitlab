@@ -5,31 +5,48 @@
   "upload_source_maps": true,
   "compatibility_date": "2024-12-11",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+    },
+  },
   "assets": {
-    "directory": "static"
+    "directory": "static",
   },
   "triggers": {
-    "crons": ["0 0 * * *"]
+    "crons": ["0 0 * * *"],
   },
   "rules": [
     {
       "type": "Text",
       "globs": ["**/*.html"],
-      "fallthrough": true
-    }
+      "fallthrough": true,
+    },
   ],
   "version_metadata": {
-    "binding": "CF_VERSION_METADATA"
+    "binding": "CF_VERSION_METADATA",
   },
   "vars": {
-    "SENTRY_RELEASE": "dev"
+    "SENTRY_RELEASE": "development",
+    "ENVIRONMENT": "development",
+    "GITLAB_REDIRECT_URI": "http://localhost:8080/oauth/gitlab/callback",
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "SENTRY_RELEASE": "production",
+        "ENVIRONMENT": "production",
+        "GITLAB_REDIRECT_URI": "https://api-ping-4-gitlab.zaniluca.workers.dev/oauth/gitlab/callback",
+      },
+    },
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "ping-4-gitlab",
       "database_id": "569bc3cf-4ce2-4d2f-99a3-92e80bc82e77",
-      "migrations_dir": "migrations"
-    }
-  ]
+      "migrations_dir": "migrations",
+    },
+  ],
 }
