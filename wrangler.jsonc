@@ -6,8 +6,12 @@
   "compatibility_date": "2024-12-11",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
       "invocation_logs": true,
     },
   },
@@ -28,14 +32,14 @@
     "binding": "CF_VERSION_METADATA",
   },
   "vars": {
-    "SENTRY_RELEASE": "development",
+    "SENTRY_ENVIRONMENT": "development",
     "ENVIRONMENT": "development",
     "GITLAB_REDIRECT_URI": "http://localhost:8080/oauth/gitlab/callback",
   },
   "env": {
     "production": {
       "vars": {
-        "SENTRY_RELEASE": "production",
+        "SENTRY_ENVIRONMENT": "production",
         "ENVIRONMENT": "production",
         "GITLAB_REDIRECT_URI": "https://api-ping-4-gitlab.zaniluca.workers.dev/oauth/gitlab/callback",
       },
