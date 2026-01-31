@@ -7,10 +7,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": false,
-    "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
-      "head_sampling_rate": 1,
       "persist": true,
       "invocation_logs": true,
     },
@@ -28,9 +26,6 @@
       "fallthrough": true,
     },
   ],
-  "version_metadata": {
-    "binding": "CF_VERSION_METADATA",
-  },
   "vars": {
     "SENTRY_ENVIRONMENT": "development",
     "ENVIRONMENT": "development",
@@ -41,15 +36,36 @@
       "vars": {
         "SENTRY_ENVIRONMENT": "production",
         "ENVIRONMENT": "production",
-        "GITLAB_REDIRECT_URI": "https://api-ping-4-gitlab.zaniluca.workers.dev/oauth/gitlab/callback",
+        "GITLAB_REDIRECT_URI": "https://api-ping-4-gitlab-production.zaniluca.workers.dev/oauth/gitlab/callback",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "ping-4-gitlab-production",
+          "database_id": "bf8ce5e3-39fe-42aa-a8f6-8d8524213e6e",
+          "migrations_dir": "migrations",
+        },
+      ],
+    },
+    "staging": {
+      "vars": {
+        "SENTRY_ENVIRONMENT": "staging",
+        "ENVIRONMENT": "staging",
+        "GITLAB_REDIRECT_URI": "https://api-ping-4-gitlab-staging.zaniluca.workers.dev/oauth/gitlab/callback",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "ping-4-gitlab-staging",
+          "database_id": "c36c308f-5636-4a3a-9321-bc85062e70be",
+          "migrations_dir": "migrations",
+        },
+      ],
     },
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "ping-4-gitlab",
-      "database_id": "569bc3cf-4ce2-4d2f-99a3-92e80bc82e77",
       "migrations_dir": "migrations",
     },
   ],
