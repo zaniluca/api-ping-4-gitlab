@@ -37,10 +37,9 @@ const redirectWithScript = (url: string) => {
 
 const redirectWithError = (error: string) =>
   redirectWithScript(
-    `${APP_URL_SCHEME}login?error=${encodeURIComponent(error)}`
+    `${APP_URL_SCHEME}login?error=${encodeURIComponent(error)}`,
   );
 
-// GitLab OAuth authorize endpoint
 gitlab.get("/authorize", async (c) => {
   const state = c.req.query("state");
 
@@ -81,7 +80,7 @@ gitlab.get("/callback", async (c) => {
             code,
             redirect_uri: c.env.GITLAB_REDIRECT_URI,
           },
-        }
+        },
       );
 
       const { data } = await axios.get<GitlabUserResponse>(
@@ -90,7 +89,7 @@ gitlab.get("/callback", async (c) => {
           headers: {
             Authorization: `Bearer ${tokens.access_token}`,
           },
-        }
+        },
       );
 
       profile = data;
@@ -113,89 +112,75 @@ gitlab.get("/callback", async (c) => {
           uid: alreadyExistingUser.id,
           hookId: alreadyExistingUser.hookId,
         },
-        c.env.JWT_ACCESS_SECRET
+        c.env.JWT_ACCESS_SECRET,
       );
       const refreshToken = getRefreshToken(
         alreadyExistingUser.id,
-        c.env.JWT_REFRESH_SECRET
+        c.env.JWT_REFRESH_SECRET,
       );
 
       return c.html(
         redirectWithScript(
-          `${APP_URL_SCHEME}login?accessToken=${accessToken}&refreshToken=${refreshToken}`
-        )
+          `${APP_URL_SCHEME}login?accessToken=${accessToken}&refreshToken=${refreshToken}`,
+        ),
       );
     }
 
     // Signup new user or link to existing account
     let user: User;
-    try {
-      if (state) {
-        // User is connecting GitLab to existing email/password account
-        const existingUser = await c.var.db
-          .select()
-          .from(users)
-          .where(eq(users.id, state))
-          .get();
+    if (state) {
+      // User is connecting GitLab to existing email/password account
+      const existingUser = await c.var.db
+        .select()
+        .from(users)
+        .where(eq(users.id, state))
+        .get();
 
-        if (!existingUser) {
-          console.error("Error while retrieving user from state");
-          return c.html(
-            redirectWithError(
-              "We couldn't associate your GitLab account with your email password account. Please try again."
-            )
-          );
-        }
-
-        const updateData: any = {
-          gitlabId: profile.id,
-        };
-        if (!existingUser.email) {
-          updateData.email = profile.email;
-        }
-
-        const updatedUser = await c.var.db
-          .update(users)
-          .set(updateData)
-          .where(eq(users.id, existingUser.id))
-          .returning()
-          .get();
-        user = updatedUser;
-      } else {
-        // Create new user
-        const newUser = await c.var.db
-          .insert(users)
-          .values({
-            hookId: generateUniqueHook(),
-            gitlabId: profile.id,
-            email: profile.email,
-          })
-          .returning()
-          .get();
-
-        user = newUser;
-      }
-    } catch (e: any) {
-      // Check for unique constraint violation
-      if (e.message?.includes("UNIQUE constraint failed")) {
+      if (!existingUser) {
+        console.error(
+          "Error while retrieving user from state, existing user not found",
+        );
         return c.html(
-          redirectWithError("An account with this email already exists")
+          redirectWithError(
+            "We couldn't associate your GitLab account with your email password account. Please try again.",
+          ),
         );
       }
-      Sentry.captureException(e);
-      throw e;
+
+      user = await c.var.db
+        .update(users)
+        .set({
+          gitlabId: profile.id,
+          email: existingUser.email || profile.email,
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning()
+        .get();
+    } else {
+      // Create new user
+      const newUser = await c.var.db
+        .insert(users)
+        .values({
+          hookId: generateUniqueHook(),
+          gitlabId: profile.id,
+          email: profile.email,
+        })
+        .returning()
+        .get();
+
+      user = newUser;
     }
 
     const accessToken = getAccessToken(
       { uid: user.id, hookId: user.hookId },
-      c.env.JWT_ACCESS_SECRET
+      c.env.JWT_ACCESS_SECRET,
     );
     const refreshToken = getRefreshToken(user.id, c.env.JWT_REFRESH_SECRET);
 
     return c.html(
       redirectWithScript(
-        `${APP_URL_SCHEME}login?accessToken=${accessToken}&refreshToken=${refreshToken}`
-      )
+        `${APP_URL_SCHEME}login?accessToken=${accessToken}&refreshToken=${refreshToken}`,
+      ),
     );
   } catch (error) {
     console.error("Unexpected error in GitLab OAuth:", error);
