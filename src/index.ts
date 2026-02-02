@@ -13,15 +13,18 @@ import oauth from "./routes/oauth";
 import webhook from "./routes/webhook";
 import { AppEnv } from "./utils/types";
 import { getDrizzleClient } from "./db/client";
+import { env } from "cloudflare:workers";
 
 const app = new Hono<AppEnv>();
 
 // Global middlewares
-app.use("*", logger());
 app.use("*", async (c, next) => {
   c.set("db", getDrizzleClient(c.env.DB));
   await next();
 });
+if (env.ENVIRONMENT === "development") {
+  app.use("*", logger());
+}
 
 // Global error handler
 app.onError((err, c) => {
