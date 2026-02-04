@@ -54,7 +54,10 @@ export const validate = <
     }
   });
 
-export type Logger = pino.Logger & {
+export type Logger = Pick<
+  pino.Logger,
+  "info" | "warn" | "error" | "bindings" | "debug" | "trace"
+> & {
   assign: (obj: pino.Bindings) => void;
 };
 
@@ -73,13 +76,23 @@ export const loggerMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   });
 
   let currentLogger = pinoLogger;
+  let accumulatedBindings: pino.Bindings = {};
+
+  const assignFn = (obj: pino.Bindings) => {
+    accumulatedBindings = { ...accumulatedBindings, ...obj };
+    currentLogger = currentLogger.child(obj);
+    Object.assign(loggerWithAssign, currentLogger, {
+      assign: assignFn,
+      bindings: bindingsFn,
+    });
+  };
+
+  const bindingsFn = () => accumulatedBindings;
 
   const loggerWithAssign: Logger = {
     ...pinoLogger,
-    assign: (obj: pino.Bindings) => {
-      currentLogger = currentLogger.child(obj);
-      Object.assign(loggerWithAssign, currentLogger);
-    },
+    assign: assignFn,
+    bindings: bindingsFn,
   } as Logger;
 
   c.set("logger", loggerWithAssign);
@@ -108,7 +121,7 @@ export const wideLoggingMiddleware = createMiddleware<AppEnv>(
         durationMs: Date.now() - startTime,
       });
 
-      if (c.res.status >= 400) {
+      if (logger.bindings().outcome === "error") {
         // Log has already been handled in error middleware
         return;
       }

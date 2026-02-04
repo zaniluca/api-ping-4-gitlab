@@ -40,10 +40,9 @@ app.onError((err, c) => {
 
     logger.assign({
       error: {
-        type: err.name,
+        type: "HTTPException",
         message: err.message,
         statusCode: status,
-        stack: err.stack,
       },
     });
 
@@ -51,6 +50,10 @@ app.onError((err, c) => {
       if (c.env.ENVIRONMENT === "test") {
         return c.json({ message: "I'm in test mode" }, 500);
       }
+      // Log stack trace for server errors
+      logger.assign({
+        stack: err.stack,
+      });
 
       logger.error(err.message);
       Sentry.captureException(err);
