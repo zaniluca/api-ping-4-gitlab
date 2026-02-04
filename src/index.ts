@@ -1,9 +1,11 @@
 import { Hono } from "hono";
-import { logger } from "hono/logger";
-import { jwt } from "hono/jwt";
 import { HTTPException } from "hono/http-exception";
 import * as Sentry from "@sentry/cloudflare";
-import { attachSentryUserInfo } from "./middlewares";
+import {
+  authRequired,
+  loggerMiddleware,
+  wideLoggingMiddleware,
+} from "./middlewares";
 import { deleteOldNotifications } from "./crons";
 
 import auth from "./routes/auth";
@@ -13,37 +15,61 @@ import oauth from "./routes/oauth";
 import webhook from "./routes/webhook";
 import { AppEnv } from "./utils/types";
 import { getDrizzleClient } from "./db/client";
-import { env } from "cloudflare:workers";
+import { requestId } from "hono/request-id";
 
 const app = new Hono<AppEnv>();
 
 // Global middlewares
-app.use("*", async (c, next) => {
+app.use(requestId());
+app.use(loggerMiddleware, wideLoggingMiddleware);
+app.use(async (c, next) => {
   c.set("db", getDrizzleClient(c.env.DB));
   await next();
 });
-if (env.ENVIRONMENT === "development") {
-  app.use("*", logger());
-}
 
 // Global error handler
 app.onError((err, c) => {
+  const logger = c.get("logger");
+
+  logger.assign({
+    outcome: "error",
+  });
+
   if (err instanceof HTTPException) {
     const status = err.status;
+
+    logger.assign({
+      error: {
+        type: err.name,
+        message: err.message,
+        statusCode: status,
+        stack: err.stack,
+      },
+    });
+
     if (status >= 500) {
       if (c.env.ENVIRONMENT === "test") {
         return c.json({ message: "I'm in test mode" }, 500);
       }
 
-      console.error("Unhandled HTTPException:", err);
+      logger.error(err.message);
       Sentry.captureException(err);
       return c.json({ message: "Oops! Something went wrong" }, status);
     } else {
+      logger.warn(err.message);
       return c.json({ message: err.message }, status);
     }
   }
 
-  console.error("Unhandled Exception:", err);
+  logger.assign({
+    error: {
+      type: err.name,
+      message: err.message,
+      stack: err.stack,
+    },
+  });
+
+  logger.error(err.message);
   Sentry.captureException(err);
   return c.json({ message: "Oops! Something went wrong" }, 500);
 });
@@ -61,27 +87,19 @@ app.get("/account-deletion-info", (c) =>
 
 // Protected routes
 const protectedUser = new Hono<AppEnv>();
-protectedUser.use("*", async (c, next) => {
-  const jwtMiddleware = jwt({ secret: c.env.JWT_ACCESS_SECRET });
-  return jwtMiddleware(c, next);
-});
-protectedUser.use("*", attachSentryUserInfo);
+protectedUser.use("*", ...authRequired);
 protectedUser.route("/", user);
 
 const protectedNotification = new Hono<AppEnv>();
-protectedNotification.use("*", async (c, next) => {
-  const jwtMiddleware = jwt({ secret: c.env.JWT_ACCESS_SECRET });
-  return jwtMiddleware(c, next);
-});
-protectedNotification.use("*", attachSentryUserInfo);
+protectedNotification.use("*", ...authRequired);
 protectedNotification.route("/", notification);
 
 app.route("/user", protectedUser);
 app.route("/notification", protectedNotification);
 
 // 404 handler
-app.notFound((c) => {
-  return c.json({ message: "Not Found" }, 404);
+app.notFound(() => {
+  throw new HTTPException(404, { message: "Not Found" });
 });
 
 const scheduled: ExportedHandlerScheduledHandler<AppEnv["Bindings"]> = async (

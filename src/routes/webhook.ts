@@ -77,6 +77,7 @@ const sanitizeSubject = (subject: string) => {
 };
 
 webhook.post("/webhook", async (c) => {
+  const logger = c.get("logger");
   const token = c.req.query("token");
 
   if (!token || token !== c.env.WEBHOOK_SECRET) {
@@ -183,7 +184,9 @@ webhook.post("/webhook", async (c) => {
       .where(eq(notifications.userId, user.id));
 
     if (!user.onboardingCompleted && notificationsCount > 0) {
-      console.log("First notification received, Onboarding completed");
+      logger.assign({
+        msg: "First notification received, Onboarding completed",
+      });
       const updatedUser = await c.var.db
         .update(users)
         .set({ onboardingCompleted: true })
@@ -194,14 +197,15 @@ webhook.post("/webhook", async (c) => {
     }
 
     if (user.mutedUntil && user.mutedUntil > new Date()) {
-      console.log("User is muted until", user.mutedUntil);
+      logger.assign({
+        msg: `User is muted until ${user.mutedUntil}, skipping notification.`,
+      });
       return c.text("OK", 200);
     }
 
     const pushTokens = user.expoPushTokens.filter(isValidToken);
 
     if (pushTokens.length === 0) {
-      console.warn("User doesn't have any valid token");
       throw new HTTPException(400, {
         message: "User doesn't have any valid token",
       });

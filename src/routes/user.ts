@@ -58,7 +58,6 @@ user.put("/", validate("json", userUpdateBodySchema), async (c) => {
   } catch (e) {
     if (e instanceof HTTPException) throw e;
 
-    console.error("Error updating user:", e);
     throw new HTTPException(500, { message: "Could not update user" });
   }
 });
@@ -74,7 +73,6 @@ user.delete("/", async (c) => {
   } catch (e) {
     if (e instanceof HTTPException) throw e;
 
-    console.error("Error deleting user:", e);
     throw new HTTPException(500, { message: "Could not delete user" });
   }
 });

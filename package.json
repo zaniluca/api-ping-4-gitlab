@@ -6,14 +6,14 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev --local --port 8080 --test-scheduled",
+    "dev": "wrangler dev --local --port 8787 --test-scheduled",
     "build": "wrangler deploy --dry-run --outdir dist --upload-source-maps --var SENTRY_RELEASE:$(sentry-cli releases propose-version)",
     "deploy": "wrangler deploy --env ${WRANGLER_ENV:-production} --outdir dist --upload-source-maps --var SENTRY_RELEASE:$(sentry-cli releases propose-version)",
     "sentry:sourcemaps": "dotenv -e .env -- sh -c '_SENTRY_RELEASE=$(sentry-cli releases propose-version) && sentry-cli releases new $_SENTRY_RELEASE --org=$SENTRY_ORG --project=$SENTRY_PROJECT && sentry-cli sourcemaps upload --org=$SENTRY_ORG --project=$SENTRY_PROJECT --release=$_SENTRY_RELEASE --strip-prefix \"dist/..\" dist && sentry-cli releases finalize $_SENTRY_RELEASE --org=$SENTRY_ORG --project=$SENTRY_PROJECT && sentry-cli releases deploys $_SENTRY_RELEASE new -e ${SENTRY_ENVIRONMENT:-production} --org=$SENTRY_ORG --project=$SENTRY_PROJECT'",
     "db:generate": "drizzle-kit generate",
     "db:migrate:staging": "wrangler d1 migrations apply ping-4-gitlab-staging --env staging --remote",
     "db:migrate:production": "wrangler d1 migrations apply ping-4-gitlab-production --env production --remote",
-    "db:migrate:local": "wrangler d1 migrations apply ping-4-gitlab --local",
+    "db:migrate:local": "wrangler d1 migrations apply ping-4-gitlab-development --local",
     "db:seed": "tsx src/db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -21,7 +21,7 @@
     "cf-typegen": "wrangler types",
     "postdeploy": "pnpm sentry:sourcemaps",
     "typecheck": "tsc --noEmit",
-    "cron": "curl -X POST 'http://localhost:8080/__scheduled?cron=0+0+*+*+*'"
+    "cron": "curl -X POST 'http://localhost:8787/__scheduled?cron=0+0+*+*+*'"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",
@@ -54,8 +54,10 @@
     "drizzle-orm": "^0.45.1",
     "expo-server-sdk": "^3.12.0",
     "hono": "^4.10.8",
+    "hono-pino": "^0.10.3",
     "jsonwebtoken": "^8.5.1",
     "object-hash": "^3.0.0",
+    "pino": "^10.3.0",
     "unique-names-generator": "^4.7.1",
     "zod": "^4.1.13"
   }

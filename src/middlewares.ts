@@ -1,50 +1,40 @@
 import { createMiddleware } from "hono/factory";
-import { HTTPException } from "hono/http-exception";
 import * as Sentry from "@sentry/cloudflare";
 import { AppEnv } from "./utils/types";
 import { ValidationTargets } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { ZodSchema } from "zod";
+import pino from "pino";
+import { createHandler as debugLog } from "hono-pino/debug-log";
+import { jwt } from "hono/jwt";
 
-/**
- * Middleware to attach user info to Sentry context
- * Should be used after JWT middleware
- */
-export const attachSentryUserInfo = createMiddleware<AppEnv>(
-  async (c, next) => {
-    const payload = c.get("jwtPayload");
-
-    if (payload?.uid) {
-      Sentry.setUser({
-        id: payload.uid as string,
-        username: payload.hookId as string,
-      });
-    }
-
-    await next();
-  },
-);
-
-/**
- * Custom error logger middleware
- */
-export const errorLogger = createMiddleware<AppEnv>(async (c, next) => {
-  await next();
-
-  // Check if there's an error in the response
-  if (c.error) {
-    // Skip logging for test environment
-    if (c.env.ENVIRONMENT === "test") return;
-
-    // Skip logging for UnauthorizedError (401/403)
-    if (c.error instanceof HTTPException) {
-      const status = c.error.status;
-      if (status === 401 || status === 403) return;
-    }
-
-    console.error(`${c.error.name}: ${c.error.message}`);
-  }
+const jwtAuth = createMiddleware<AppEnv>(async (c, next) => {
+  const jwtMiddleware = jwt({ secret: c.env.JWT_ACCESS_SECRET });
+  return jwtMiddleware(c, next);
 });
+
+const attachUserInfo = createMiddleware<AppEnv>(async (c, next) => {
+  const payload = c.get("jwtPayload");
+  const logger = c.get("logger");
+
+  if (payload?.uid) {
+    logger.assign({
+      user: {
+        id: payload.uid as string,
+        hookId: payload.hookId as string,
+      },
+    });
+
+    Sentry.setUser({
+      id: payload.uid as string,
+      username: payload.hookId as string,
+    });
+  }
+
+  await next();
+});
+
+export const authRequired = [jwtAuth, attachUserInfo];
 
 export const validate = <
   Target extends keyof ValidationTargets,
@@ -63,3 +53,74 @@ export const validate = <
       );
     }
   });
+
+export type Logger = pino.Logger & {
+  assign: (obj: pino.Bindings) => void;
+};
+
+export const loggerMiddleware = createMiddleware<AppEnv>(async (c, next) => {
+  const pinoLogger = pino({
+    browser: {
+      asObject: true,
+      write:
+        c.env.ENVIRONMENT === "development"
+          ? debugLog({
+              normalLogFormat: "[{time}] {levelLabel} {msg} {bindings}",
+            })
+          : undefined,
+    },
+    level: "info",
+  });
+
+  let currentLogger = pinoLogger;
+
+  const loggerWithAssign: Logger = {
+    ...pinoLogger,
+    assign: (obj: pino.Bindings) => {
+      currentLogger = currentLogger.child(obj);
+      Object.assign(loggerWithAssign, currentLogger);
+    },
+  } as Logger;
+
+  c.set("logger", loggerWithAssign);
+
+  await next();
+});
+
+export const wideLoggingMiddleware = createMiddleware<AppEnv>(
+  async (c, next) => {
+    const startTime = Date.now();
+    const logger = c.get("logger");
+
+    logger.assign({
+      headers: c.req.header(),
+      requestId: c.get("requestId"),
+      timestamp: new Date().toISOString(),
+      method: c.req.method,
+      path: c.req.path,
+      service: "api",
+      version: c.env.SENTRY_RELEASE || "unknown",
+    });
+    try {
+      await next();
+
+      logger.assign({
+        durationMs: Date.now() - startTime,
+      });
+
+      if (c.res.status >= 400) {
+        // Log has already been handled in error middleware
+        return;
+      }
+      logger.assign({
+        statusCode: c.res.status,
+        outcome: "success",
+      });
+      logger.info(`${c.req.method} ${c.req.path}`);
+    } finally {
+      logger.assign({
+        durationMs: Date.now() - startTime,
+      });
+    }
+  },
+);

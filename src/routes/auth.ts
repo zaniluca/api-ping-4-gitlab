@@ -24,6 +24,7 @@ const auth = new Hono<AppEnv>();
 
 auth.post("/login", validate("json", loginBodySchema), async (c) => {
   const { email, password } = c.req.valid("json");
+  const logger = c.get("logger");
 
   const user = await c.var.db
     .select()
@@ -34,13 +35,14 @@ auth.post("/login", validate("json", loginBodySchema), async (c) => {
   if (!user || !user.password || !bcrypt.compareSync(password, user.password)) {
     throw new HTTPException(401, { message: "Invalid credentials" });
   }
+  logger.assign({ user });
 
   await updateLastLogin(user.id, c.var.db);
 
   return c.json({
     accessToken: getAccessToken(
       { uid: user.id, hookId: user.hookId },
-      c.env.JWT_ACCESS_SECRET
+      c.env.JWT_ACCESS_SECRET,
     ),
     refreshToken: getRefreshToken(user.id, c.env.JWT_REFRESH_SECRET),
   });
@@ -48,6 +50,7 @@ auth.post("/login", validate("json", loginBodySchema), async (c) => {
 
 auth.post("/signup", validate("json", signupBodySchema), async (c) => {
   const { email, password } = c.req.valid("json");
+  const logger = c.get("logger");
 
   // Check for JWT token in Authorization header for anonymous user upgrade
   const authHeader = c.req.header("Authorization");
@@ -80,8 +83,7 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
   let user: Pick<User, "id" | "hookId">;
 
   if (isAnonymous && anonymousUserId) {
-    console.log("Upgrading anonymous user to permanent user");
-
+    logger.assign({ msg: "Upgrading anonymous user" });
     const updatedUser = await c.var.db
       .update(users)
       .set({
@@ -107,15 +109,17 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
     user = newUser;
   }
 
+  logger.assign({ user });
+
   return c.json(
     {
       accessToken: getAccessToken(
         { uid: user.id, hookId: user.hookId! },
-        c.env.JWT_ACCESS_SECRET
+        c.env.JWT_ACCESS_SECRET,
       ),
       refreshToken: getRefreshToken(user.id, c.env.JWT_REFRESH_SECRET),
     },
-    isAnonymous ? 200 : 201
+    isAnonymous ? 200 : 201,
   );
 });
 
@@ -138,7 +142,7 @@ auth.post("/refresh", validate("json", refreshBodySchema), async (c) => {
   return c.json({
     accessToken: getAccessToken(
       { uid: payload.uid, hookId: payload.hookId },
-      c.env.JWT_ACCESS_SECRET
+      c.env.JWT_ACCESS_SECRET,
     ),
     refreshToken: getRefreshToken(payload.uid, c.env.JWT_REFRESH_SECRET),
   });

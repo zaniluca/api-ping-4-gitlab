@@ -10,7 +10,7 @@
     "logs": {
       "enabled": true,
       "persist": true,
-      "invocation_logs": true,
+      "invocation_logs": false,
     },
   },
   "assets": {
@@ -66,6 +66,8 @@
   "d1_databases": [
     {
       "binding": "DB",
+      "database_name": "ping-4-gitlab-development",
+      "database_id": "local",
       "migrations_dir": "migrations",
     },
   ],

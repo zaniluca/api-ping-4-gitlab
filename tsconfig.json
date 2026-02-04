@@ -14,7 +14,7 @@
     "types": ["vitest/globals"],
     "target": "ES2021",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "jsx": "react"
   }

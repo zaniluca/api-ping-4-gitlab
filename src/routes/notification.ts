@@ -24,7 +24,7 @@ notification.get(
       // Cursor-based pagination: get records where id < cursor
       whereCondition = and(
         eq(notifications.userId, userId),
-        lt(notifications.id, cursor)
+        lt(notifications.id, cursor),
       )!;
     }
 
@@ -52,7 +52,7 @@ notification.get(
       hasMore,
       nextCursor: hasMore ? items[items.length - 1].id : null,
     });
-  }
+  },
 );
 
 notification.get("/:id", async (c) => {
@@ -82,7 +82,7 @@ notification.put(
       .get();
 
     return c.json(updatedNotification);
-  }
+  },
 );
 
 export default notification;
