@@ -18,7 +18,7 @@ import { HTTPException } from "hono/http-exception";
 import generateUniqueHook from "../utils/hook-generator";
 import { eq } from "drizzle-orm";
 import { AppEnv } from "../utils/types";
-import { validate } from "../middlewares";
+import { validate } from "../middlewares/validation";
 
 const auth = new Hono<AppEnv>();
 

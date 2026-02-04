@@ -6,7 +6,7 @@ import {
 } from "../utils/validation";
 import { eq, desc, count, and, lt } from "drizzle-orm";
 import { AppEnv } from "../utils/types";
-import { validate } from "../middlewares";
+import { validate } from "../middlewares/validation";
 
 const notification = new Hono<AppEnv>();
 

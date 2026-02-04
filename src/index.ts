@@ -1,13 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import * as Sentry from "@sentry/cloudflare";
-import {
-  authRequired,
-  loggerMiddleware,
-  wideLoggingMiddleware,
-} from "./middlewares";
-import { deleteOldNotifications } from "./crons";
-
+import { crons } from "./crons";
 import auth from "./routes/auth";
 import user from "./routes/user";
 import notification from "./routes/notification";
@@ -16,6 +10,8 @@ import webhook from "./routes/webhook";
 import { AppEnv } from "./utils/types";
 import { getDrizzleClient } from "./db/client";
 import { requestId } from "hono/request-id";
+import { authRequired } from "./middlewares/auth";
+import { loggerMiddleware, wideLoggingMiddleware } from "./middlewares/logging";
 
 const app = new Hono<AppEnv>();
 
@@ -105,20 +101,6 @@ app.notFound(() => {
   throw new HTTPException(404, { message: "Not Found" });
 });
 
-const scheduled: ExportedHandlerScheduledHandler<AppEnv["Bindings"]> = async (
-  event,
-  env,
-  _ctx,
-) => {
-  console.log("Running scheduled event:", event.cron);
-  switch (event.cron) {
-    case "0 0 * * *":
-      // Every day at midnight
-      await deleteOldNotifications(env);
-      break;
-  }
-};
-
 export const testApp = app;
 
 const withSentry = Sentry.withSentry<AppEnv["Bindings"]>((env) => {
@@ -151,5 +133,5 @@ const withSentry = Sentry.withSentry<AppEnv["Bindings"]>((env) => {
 
 export default {
   fetch: withSentry.fetch,
-  scheduled,
+  scheduled: crons,
 };

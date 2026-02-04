@@ -1,7 +1,7 @@
 import type { JwtPayload } from "jsonwebtoken";
 import type { JwtVariables } from "hono/jwt";
 import { getDrizzleClient } from "../db/client";
-import { Logger } from "../middlewares";
+import { Logger } from "./logger";
 
 export type CustomJWTClaims = JwtPayload & {
   uid: string;

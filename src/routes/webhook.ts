@@ -131,7 +131,6 @@ webhook.post("/webhook", async (c) => {
       .get();
 
     if (!foundUser) {
-      console.warn(`User with hook ${hookId} doesn't exist`);
       throw new HTTPException(400, {
         message: `User with hook ${hookId} doesn't exist`,
       });
@@ -152,10 +151,7 @@ webhook.post("/webhook", async (c) => {
         .get();
 
       if (existingNotification) {
-        console.warn(
-          `Duplicate notification detected for user ${user.id}, skipping creation.`,
-        );
-        return c.text("Duplicate notification", 409);
+        throw new HTTPException(409, { message: "Duplicate notification" });
       }
 
       const newNotification = await c.var.db
@@ -173,9 +169,9 @@ webhook.post("/webhook", async (c) => {
 
       notification = newNotification;
     } catch (e) {
-      console.error("Couldn't create notification", e);
+      if (e instanceof HTTPException) throw e;
       Sentry.captureException(e);
-      return c.text("Internal Server Error", 500);
+      throw new HTTPException(500, { message: "Internal Server Error" });
     }
 
     const [{ value: notificationsCount }] = await c.var.db
@@ -198,7 +194,12 @@ webhook.post("/webhook", async (c) => {
       logger.setMsg(
         `User is muted until ${user.mutedUntil}, skipping notification.`,
       );
-      return c.text("OK", 200);
+      return c.json(
+        {
+          message: `User is muted until ${user.mutedUntil}, skipping notification.`,
+        },
+        200,
+      );
     }
 
     const pushTokens = user.expoPushTokens.filter(isValidToken);

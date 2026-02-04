@@ -6,7 +6,7 @@ import { userUpdateBodySchema } from "../utils/validation";
 import { HTTPException } from "hono/http-exception";
 import { eq } from "drizzle-orm";
 import { AppEnv } from "../utils/types";
-import { validate } from "../middlewares";
+import { validate } from "../middlewares/validation";
 
 const user = new Hono<AppEnv>();
 
