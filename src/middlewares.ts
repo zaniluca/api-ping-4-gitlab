@@ -59,6 +59,7 @@ export type Logger = Pick<
   "info" | "warn" | "error" | "bindings" | "debug" | "trace"
 > & {
   assign: (obj: pino.Bindings) => void;
+  setMsg: (msg: string) => void;
 };
 
 export const loggerMiddleware = createMiddleware<AppEnv>(async (c, next) => {
@@ -84,15 +85,21 @@ export const loggerMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     Object.assign(loggerWithAssign, currentLogger, {
       assign: assignFn,
       bindings: bindingsFn,
+      setMsg: setMsgFn,
     });
   };
 
   const bindingsFn = () => accumulatedBindings;
 
+  const setMsgFn = (msg: string) => {
+    assignFn({ msg });
+  };
+
   const loggerWithAssign: Logger = {
     ...pinoLogger,
     assign: assignFn,
     bindings: bindingsFn,
+    setMsg: setMsgFn,
   } as Logger;
 
   c.set("logger", loggerWithAssign);

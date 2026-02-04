@@ -83,7 +83,6 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
   let user: Pick<User, "id" | "hookId">;
 
   if (isAnonymous && anonymousUserId) {
-    logger.assign({ msg: "Upgrading anonymous user" });
     const updatedUser = await c.var.db
       .update(users)
       .set({
@@ -94,6 +93,7 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
       .returning({ id: users.id, hookId: users.hookId })
       .get();
 
+    logger.setMsg("Upgraded anonymous user via signup");
     user = updatedUser;
   } else {
     const newUser = await c.var.db
@@ -106,6 +106,7 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
       .returning({ id: users.id, hookId: users.hookId })
       .get();
 
+    logger.setMsg("Created new user via signup");
     user = newUser;
   }
 

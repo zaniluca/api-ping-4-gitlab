@@ -184,9 +184,7 @@ webhook.post("/webhook", async (c) => {
       .where(eq(notifications.userId, user.id));
 
     if (!user.onboardingCompleted && notificationsCount > 0) {
-      logger.assign({
-        msg: "First notification received, Onboarding completed",
-      });
+      logger.setMsg("First notification received, Onboarding completed");
       const updatedUser = await c.var.db
         .update(users)
         .set({ onboardingCompleted: true })
@@ -197,9 +195,9 @@ webhook.post("/webhook", async (c) => {
     }
 
     if (user.mutedUntil && user.mutedUntil > new Date()) {
-      logger.assign({
-        msg: `User is muted until ${user.mutedUntil}, skipping notification.`,
-      });
+      logger.setMsg(
+        `User is muted until ${user.mutedUntil}, skipping notification.`,
+      );
       return c.text("OK", 200);
     }
 
@@ -210,6 +208,7 @@ webhook.post("/webhook", async (c) => {
         message: "User doesn't have any valid token",
       });
     }
+    logger.assign({ notification });
 
     const notificationPayload: ExpoPushMessage = {
       to: pushTokens,
@@ -221,6 +220,8 @@ webhook.post("/webhook", async (c) => {
         url: `${APP_URL_SCHEME}notifications/${notification.id}`,
       },
     };
+
+    logger.assign({ pushNotificationPayload: notificationPayload });
 
     if (notificationsCount === 1) {
       notificationPayload.title = "Welcome to Ping for Gitlab!";
@@ -312,7 +313,6 @@ webhook.post("/webhook", async (c) => {
     return c.text("OK", 200);
   } catch (error) {
     if (error instanceof HTTPException) throw error;
-    console.error("Unexpected error in webhook handler:", error);
     Sentry.captureException(error);
     throw new HTTPException(500, { message: "Internal server error" });
   }
