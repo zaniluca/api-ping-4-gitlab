@@ -6,6 +6,7 @@ export default defineConfig({
     setupFiles: [
       "./src/__mocks__/drizzle-mock.ts",
       "./src/__mocks__/axios-mock.ts",
+      "./src/__mocks__/cloudflare-workers-mock.ts",
     ],
     silent: true,
     globals: true,

@@ -7,10 +7,13 @@ describe("POST /webhook", () => {
   const mockEnv = {
     WEBHOOK_SECRET: "test-secret",
     JWT_ACCESS_SECRET: "test-jwt-secret",
+    JWT_REFRESH_SECRET: "test-jwt-refresh-secret",
     DB: {} as any,
-    SENTRY_DSN: "",
-    SENTRY_RELEASE: "dev",
-    SENTRY_ENVIRONMENT: "test",
+    ENVIRONMENT: "test",
+    GITLAB_REDIRECT_URI: "http://localhost:8080/oauth/gitlab/callback",
+    DATABASE_URL: "test-db-url",
+    GITLAB_APP_ID: "test-app-id",
+    GITLAB_APP_SECRET: "test-app-secret",
   } as Env;
 
   it("Rejects requests without valid secret", async () => {
@@ -63,6 +66,14 @@ describe("POST /webhook", () => {
       where: mockUserWhere,
     });
 
+    // Mock existing notification check (should return undefined - no duplicate)
+    const mockExistingNotifWhere = vi.fn().mockReturnValue({
+      get: vi.fn().mockResolvedValue(undefined),
+    });
+    const mockExistingNotifFrom = vi.fn().mockReturnValue({
+      where: mockExistingNotifWhere,
+    });
+
     // Mock notification insert
     const mockNotificationReturning = vi.fn().mockReturnValue({
       get: vi.fn().mockResolvedValue({
@@ -103,6 +114,7 @@ describe("POST /webhook", () => {
 
     drizzleMock.select
       .mockReturnValueOnce({ from: mockUserFrom } as any)
+      .mockReturnValueOnce({ from: mockExistingNotifFrom } as any)
       .mockReturnValueOnce({ from: mockCountFrom } as any);
 
     drizzleMock.insert.mockReturnValue({

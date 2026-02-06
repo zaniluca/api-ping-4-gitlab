@@ -23,26 +23,27 @@ export const wideLoggingMiddleware = createMiddleware<AppEnv>(
       service: "api",
       version: c.env.SENTRY_RELEASE || "unknown",
     });
-    try {
-      await next();
 
-      logger.assign({
-        durationMs: Date.now() - startTime,
-      });
+    await next();
 
-      if (logger.bindings().outcome === "error") {
-        // Log has already been handled in error middleware
-        return;
-      }
-      logger.assign({
-        statusCode: c.res.status,
-        outcome: "success",
-      });
+    logger.assign({
+      durationMs: Date.now() - startTime,
+    });
+
+    if (logger.bindings().outcome === "error") {
+      // Log has already been handled in error middleware
+      return;
+    }
+    logger.assign({
+      statusCode: c.res.status,
+      outcome: "success",
+    });
+
+    if (!logger.bindings().msg) {
       logger.info(`${c.req.method} ${c.req.path}`);
-    } finally {
-      logger.assign({
-        durationMs: Date.now() - startTime,
-      });
+    } else {
+      // A custom message is already set
+      logger.info({});
     }
   },
 );

@@ -34,27 +34,32 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) {
     const status = err.status;
 
-    logger.assign({
-      error: {
-        type: "HTTPException",
-        message: err.message,
-        statusCode: status,
-      },
-    });
-
     if (status >= 500) {
       if (c.env.ENVIRONMENT === "test") {
         return c.json({ message: "I'm in test mode" }, 500);
       }
       // Log stack trace for server errors
       logger.assign({
-        stack: err.stack,
+        error: {
+          type: "HTTPException",
+          message: err.message,
+          statusCode: status,
+          stack: err.stack,
+        },
       });
 
       logger.error(err.message);
       Sentry.captureException(err);
       return c.json({ message: "Oops! Something went wrong" }, status);
     } else {
+      logger.assign({
+        error: {
+          type: "HTTPException",
+          message: err.message,
+          statusCode: status,
+        },
+      });
+
       logger.warn(err.message);
       return c.json({ message: err.message }, status);
     }

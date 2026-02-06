@@ -19,9 +19,11 @@ export const getLogger = (env: AppEnv["Bindings"]): Logger => {
           ? debugLog({
               normalLogFormat: "[{time}] {levelLabel} {msg} {bindings}",
             })
-          : undefined,
+          : env.ENVIRONMENT === "test"
+            ? () => {} // No-op in test mode
+            : undefined,
     },
-    level: "info",
+    level: env.ENVIRONMENT === "test" ? "silent" : "info",
   });
 
   let currentLogger = pinoLogger;
