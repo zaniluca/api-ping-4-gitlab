@@ -3,7 +3,7 @@ import axios from "axios";
 import type { User } from "../../db/schema";
 import { users } from "../../db/schema";
 import { getAccessToken, getRefreshToken } from "../../utils/common";
-import generateUniqueHook from "../../utils/hook-generator";
+import { getValidHookId } from "../../utils/get-valid-hook-id";
 import * as Sentry from "@sentry/cloudflare";
 import { APP_URL_SCHEME } from "../../utils/constants";
 import { eq } from "drizzle-orm";
@@ -157,11 +157,13 @@ gitlab.get("/callback", async (c) => {
         .returning()
         .get();
     } else {
-      // Create new user
+      // new user
+      const hookId = await getValidHookId(c.var.db);
+
       const newUser = await c.var.db
         .insert(users)
         .values({
-          hookId: generateUniqueHook(),
+          hookId,
           gitlabId: profile.id,
           email: profile.email,
         })

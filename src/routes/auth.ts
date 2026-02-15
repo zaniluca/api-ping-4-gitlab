@@ -15,7 +15,7 @@ import {
   signupBodySchema,
 } from "../utils/validation";
 import { HTTPException } from "hono/http-exception";
-import generateUniqueHook from "../utils/hook-generator";
+import { getValidHookId } from "../utils/get-valid-hook-id";
 import { eq } from "drizzle-orm";
 import { AppEnv } from "../utils/types";
 import { validate } from "../middlewares/validation";
@@ -96,12 +96,14 @@ auth.post("/signup", validate("json", signupBodySchema), async (c) => {
     logger.setMsg("Upgraded anonymous user via signup");
     user = updatedUser;
   } else {
+    const hookId = await getValidHookId(c.var.db);
+
     const newUser = await c.var.db
       .insert(users)
       .values({
         email,
         password: bcrypt.hashSync(password, 10),
-        hookId: generateUniqueHook(),
+        hookId,
       })
       .returning({ id: users.id, hookId: users.hookId })
       .get();
