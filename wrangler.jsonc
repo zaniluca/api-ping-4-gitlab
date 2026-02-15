@@ -29,7 +29,7 @@
   "vars": {
     "SENTRY_ENVIRONMENT": "development",
     "ENVIRONMENT": "development",
-    "GITLAB_REDIRECT_URI": "http://localhost:8080/oauth/gitlab/callback",
+    "GITLAB_REDIRECT_URI": "http://localhost:8787/oauth/gitlab/callback",
   },
   "env": {
     "production": {

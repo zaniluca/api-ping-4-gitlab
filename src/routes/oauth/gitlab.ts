@@ -102,8 +102,20 @@ gitlab.get("/callback", async (c) => {
     const alreadyExistingUser = await c.var.db
       .select()
       .from(users)
-      .where(eq(users.gitlabId, profile.id))
+      .where(eq(users.email, profile.email))
       .get();
+
+    if (
+      alreadyExistingUser &&
+      alreadyExistingUser.gitlabId &&
+      alreadyExistingUser.gitlabId !== profile.id
+    ) {
+      return c.html(
+        redirectWithError(
+          "This GitLab account is already associated with a different email.",
+        ),
+      );
+    }
 
     // Login existing user
     if (alreadyExistingUser) {

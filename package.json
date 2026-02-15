@@ -14,7 +14,7 @@
     "db:migrate:staging": "wrangler d1 migrations apply ping-4-gitlab-staging --env staging --remote",
     "db:migrate:production": "wrangler d1 migrations apply ping-4-gitlab-production --env production --remote",
     "db:migrate:local": "wrangler d1 migrations apply ping-4-gitlab-development --local",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:seed": "pnpm db:migrate:local && tsx src/db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky install",
