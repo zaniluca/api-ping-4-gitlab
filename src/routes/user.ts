@@ -39,23 +39,19 @@ user.put("/", validate("json", userUpdateBodySchema), async (c) => {
     const payload = c.get("jwtPayload");
     const userId = payload?.uid as string;
     const posthog = c.get("posthog");
-    const { password, email, expoPushTokens, mutedUntil } = c.req.valid("json");
-
-    const updateData: Record<string, any> = {};
-    if (email !== undefined) updateData.email = email;
-    if (expoPushTokens !== undefined)
-      updateData.expoPushTokens = expoPushTokens;
-    if (mutedUntil !== undefined) updateData.mutedUntil = mutedUntil;
-    if (password) updateData.password = bcrypt.hashSync(password, 10);
+    const { password, ...updateData } = c.req.valid("json");
 
     const updatedUser = await c.var.db
       .update(users)
-      .set(updateData)
+      .set({
+        ...updateData,
+        password: password ? bcrypt.hashSync(password, 10) : undefined,
+      })
       .where(eq(users.id, userId))
       .returning()
       .get();
 
-    if (expoPushTokens !== undefined) {
+    if (updateData.expoPushTokens !== undefined) {
       posthog.capture({
         distinctId: userId,
         event: "push_token_registered",
@@ -66,7 +62,10 @@ user.put("/", validate("json", userUpdateBodySchema), async (c) => {
   } catch (e) {
     if (e instanceof HTTPException) throw e;
 
-    throw new HTTPException(500, { message: "Could not update user" });
+    throw new HTTPException(500, {
+      message: "Could not update user",
+      cause: e,
+    });
   }
 });
 
@@ -87,7 +86,10 @@ user.delete("/", async (c) => {
   } catch (e) {
     if (e instanceof HTTPException) throw e;
 
-    throw new HTTPException(500, { message: "Could not delete user" });
+    throw new HTTPException(500, {
+      message: "Could not delete user",
+      cause: e,
+    });
   }
 });
 
