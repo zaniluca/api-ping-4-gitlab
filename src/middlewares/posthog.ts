@@ -14,7 +14,10 @@ export const posthogMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
 
   c.set("posthog", client);
   await next();
+
   try {
+    // During tests this will throw since there is no executionCtx
+    // A better solution would be to mock the call to waitUntil in the tests
     c.executionCtx.waitUntil(client.shutdown());
   } catch {
     client.shutdown().catch(() => {});
