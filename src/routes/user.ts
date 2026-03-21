@@ -38,6 +38,7 @@ user.put("/", validate("json", userUpdateBodySchema), async (c) => {
   try {
     const payload = c.get("jwtPayload");
     const userId = payload?.uid as string;
+    const posthog = c.get("posthog");
     const { password, email, expoPushTokens, mutedUntil } = c.req.valid("json");
 
     const updateData: Record<string, any> = {};
@@ -54,6 +55,13 @@ user.put("/", validate("json", userUpdateBodySchema), async (c) => {
       .returning()
       .get();
 
+    if (expoPushTokens !== undefined) {
+      posthog.capture({
+        distinctId: userId,
+        event: "push_token_registered",
+      });
+    }
+
     return c.json(updatedUser);
   } catch (e) {
     if (e instanceof HTTPException) throw e;
@@ -66,8 +74,14 @@ user.delete("/", async (c) => {
   try {
     const payload = c.get("jwtPayload");
     const userId = payload?.uid as string;
+    const posthog = c.get("posthog");
 
     await c.var.db.delete(users).where(eq(users.id, userId));
+
+    posthog.capture({
+      distinctId: userId,
+      event: "account_deleted",
+    });
 
     return c.json({ message: "User deleted" });
   } catch (e) {
